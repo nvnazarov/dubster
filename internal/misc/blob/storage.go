@@ -1,3 +1,5 @@
+// Package blob contains common abstractions for working
+// with BLOBs.
 package blob
 
 import (
@@ -17,11 +19,6 @@ type OpenReader interface {
 
 type OpenWriter interface {
 	OpenWrite(ctx context.Context, id string) (io.WriteCloser, error)
-}
-
-type Storage interface {
-	OpenReader
-	OpenWriter
 }
 
 type Uploader interface {

@@ -2,7 +2,10 @@ package clip
 
 import (
 	"context"
+	"errors"
 )
+
+var ErrNotFound = errors.New("clip not found")
 
 type Tx interface {
 	Get(ctx context.Context, clipID string) (Clip, error)

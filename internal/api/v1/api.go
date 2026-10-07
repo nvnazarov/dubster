@@ -15,7 +15,7 @@ type Routers struct {
 
 func ListenAndServe(address string, routers Routers) error {
 	r := chi.NewRouter()
-	r.Route("/v1", func(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/library", routers.Library)
 		r.Mount("/clips", routers.Clips)
 		r.Mount("/sessions", routers.Sessions)

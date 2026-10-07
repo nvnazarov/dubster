@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/nvnazarov/dubster/internal/blob"
+	"github.com/nvnazarov/dubster/internal/misc/blob"
 )
 
 type GetUploadURL struct {

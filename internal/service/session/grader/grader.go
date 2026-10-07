@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/nvnazarov/dubster/internal/blob"
-	"github.com/nvnazarov/dubster/internal/command"
-	"github.com/nvnazarov/dubster/internal/event"
+	"github.com/nvnazarov/dubster/internal/misc/blob"
+	"github.com/nvnazarov/dubster/internal/misc/command"
+	"github.com/nvnazarov/dubster/internal/misc/event"
 	"github.com/nvnazarov/dubster/internal/service/clip"
 	"github.com/nvnazarov/dubster/internal/service/session"
 )

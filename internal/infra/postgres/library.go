@@ -6,9 +6,9 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nvnazarov/dubster/internal/misc/util/errorsutil"
 	"github.com/nvnazarov/dubster/internal/service/clip"
 	"github.com/nvnazarov/dubster/internal/service/library"
-	"github.com/nvnazarov/dubster/internal/util/errorsutil"
 )
 
 type Library struct {

@@ -5,8 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/nvnazarov/dubster/internal/util/errorsutil"
+	"github.com/nvnazarov/dubster/internal/misc/util/errorsutil"
 )
+
+type InvalidParams error
 
 var (
 	ErrEmptyTitle         InvalidParams = errors.New("title is empty")
@@ -18,26 +20,27 @@ var (
 	ErrTooManySegments    InvalidParams = errors.New("too many segments")
 	ErrNoSegments         InvalidParams = errors.New("no segments")
 	ErrFormat             InvalidParams = errors.New("invalid format")
+	ErrNotOwned                         = errors.New("clip not owned")
 )
 
-type Create struct {
+type CRUD struct {
 	clips Repository
 }
 
+func NewCRUD(clips Repository) CRUD {
+	return CRUD{clips: clips}
+}
+
 type CreateParams struct {
-	UserID      string
 	ClipID      string
+	UserID      string
 	Title       string
 	Description string
 	Segments    map[string]Segment
 	Roles       map[string]Role
 }
 
-func NewCreate(clips Repository) Create {
-	return Create{clips: clips}
-}
-
-func (s *Create) Execute(ctx context.Context, p CreateParams) (Clip, error) {
+func (c *CRUD) Create(ctx context.Context, p CreateParams) (Clip, error) {
 	clip := Clip{
 		ID:          p.ClipID,
 		AuthorID:    p.UserID,
@@ -83,9 +86,37 @@ func (s *Create) Execute(ctx context.Context, p CreateParams) (Clip, error) {
 			return clip, ErrUnknownRole
 		}
 	}
-	err := s.clips.Save(ctx, clip)
+	err := c.clips.Save(ctx, clip)
 	if err != nil {
 		return clip, errorsutil.WrapError(err)
 	}
 	return clip, nil
+}
+
+type DeleteParams struct {
+	UserID string
+	ClipID string
+}
+
+func (c *CRUD) Delete(ctx context.Context, p DeleteParams) error {
+	tx, err := c.clips.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	clip, err := tx.Get(ctx, p.ClipID)
+	if err != nil {
+		return err
+	}
+	if clip.AuthorID != p.UserID {
+		return ErrNotOwned
+	}
+	if err := tx.Delete(ctx, p.ClipID); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func (c *CRUD) Get(ctx context.Context, clipID string) (Clip, error) {
+	return c.clips.Get(ctx, clipID)
 }

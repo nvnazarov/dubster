@@ -1,3 +1,5 @@
+// Package event provides common abstractions for
+// implementing EDA (Event Driven Architecture).
 package event
 
 import "context"

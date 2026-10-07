@@ -17,12 +17,13 @@ type Segment struct {
 }
 
 type Clip struct {
-	ID          string             `json:"id"`
-	AuthorID    string             `json:"authorID"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Segments    map[string]Segment `json:"segments"`
-	Roles       map[string]Role    `json:"roles"`
-	Verified    bool               `json:"verified"`
-	DateCreated time.Time          `json:"dateCreated"`
+	ID           string             `json:"id"`
+	AuthorID     string             `json:"authorID"`
+	Title        string             `json:"title"`
+	Description  string             `json:"description"`
+	Segments     map[string]Segment `json:"segments"`
+	Roles        map[string]Role    `json:"roles"`
+	Verified     bool               `json:"verified"`
+	DateCreated  time.Time          `json:"dateCreated"`
+	DateVerified time.Time          `json:"dateVerified"`
 }

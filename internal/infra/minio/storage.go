@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
-	"github.com/nvnazarov/dubster/internal/util/size"
+	"github.com/nvnazarov/dubster/internal/misc/size"
 )
 
 type Storage struct {

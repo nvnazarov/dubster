@@ -1,13 +1,13 @@
-package session
+package renderer
 
 import (
 	"context"
 	"io"
 	"time"
 
-	"github.com/nvnazarov/dubster/internal/blob"
-	"github.com/nvnazarov/dubster/internal/command"
-	"github.com/nvnazarov/dubster/internal/event"
+	"github.com/nvnazarov/dubster/internal/misc/blob"
+	"github.com/nvnazarov/dubster/internal/misc/command"
+	"github.com/nvnazarov/dubster/internal/misc/event"
 	"github.com/nvnazarov/dubster/internal/service/clip"
 	"github.com/nvnazarov/dubster/internal/service/session"
 )
@@ -21,8 +21,24 @@ type Renderer struct {
 	publisher  event.Publisher[session.SessionID]
 }
 
-func New() Renderer {
-	return Renderer{}
+type Dependencies struct {
+	Sessions   session.Repository
+	Clips      clip.Repository
+	Recordings blob.OpenReader
+	Renders    blob.OpenWriter
+	Handler    command.Handler[session.SessionID]
+	Publisher  event.Publisher[session.SessionID]
+}
+
+func New(d Dependencies) Renderer {
+	return Renderer{
+		sessions:   d.Sessions,
+		clips:      d.Clips,
+		recordings: d.Recordings,
+		renders:    d.Renders,
+		handler:    d.Handler,
+		publisher:  d.Publisher,
+	}
 }
 
 func (r *Renderer) Run(ctx context.Context) error {

@@ -1,13 +1,16 @@
+// Package command contains common abstractions for
+// implementing the Command Bus pattern (a type of
+// the Mediator pattern).
 package command
 
 import "context"
 
-// Dispatcher abstracts a (specific) command dispatcher.
+// Dispatcher abstracts a specific command dispatcher.
 type Dispatcher[T any] interface {
 	Dispatch(ctx context.Context, command T) error
 }
 
-// Handler abstracts a (specific) command handler.
+// Handler abstracts a specific command handler.
 type Handler[T any] interface {
 	// Handle waits for the next command and returns
 	// it to the caller.

@@ -6,24 +6,20 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/nvnazarov/dubster/internal/blob"
+	"github.com/nvnazarov/dubster/internal/misc/blob"
 	"github.com/nvnazarov/dubster/internal/service/clip"
 )
 
 type ClipsRouter struct {
 	chi.Router
-	deleteClip         clip.Delete
-	createClip         clip.Create
-	getClip            clip.Get
+	crud               clip.CRUD
 	getClipUploadURL   clip.GetUploadURL
 	notifyClipUploaded clip.NotifyUploaded
 	getClipDownloadURL clip.GetDownloadURL
 }
 
 type ClipsRouterDependencies struct {
-	DeleteClip         clip.Delete
-	CreateClip         clip.Create
-	GetClip            clip.Get
+	CRUD               clip.CRUD
 	GetClipUploadURL   clip.GetUploadURL
 	NotifyClipUploaded clip.NotifyUploaded
 	GetClipDownloadURL clip.GetDownloadURL
@@ -33,9 +29,7 @@ func NewClipsRouter(d ClipsRouterDependencies) ClipsRouter {
 	chiRouter := chi.NewRouter()
 	r := ClipsRouter{
 		chiRouter,
-		d.DeleteClip,
-		d.CreateClip,
-		d.GetClip,
+		d.CRUD,
 		d.GetClipUploadURL,
 		d.NotifyClipUploaded,
 		d.GetClipDownloadURL,
@@ -51,7 +45,7 @@ func NewClipsRouter(d ClipsRouterDependencies) ClipsRouter {
 
 func (cr *ClipsRouter) GetClip(w http.ResponseWriter, r *http.Request) {
 	clipID := chi.URLParam(r, "clipID")
-	c, err := cr.getClip.Execute(r.Context(), clip.GetParams{ClipID: clipID})
+	c, err := cr.crud.Get(r.Context(), clipID)
 	if err != nil {
 		if errors.Is(err, clip.ErrNotFound) {
 			http.Error(w, "clip not found", http.StatusNotFound)
@@ -70,7 +64,7 @@ func (cr *ClipsRouter) GetClip(w http.ResponseWriter, r *http.Request) {
 func (cr *ClipsRouter) DeleteClip(w http.ResponseWriter, r *http.Request) {
 	user := UserFromContext(r.Context())
 	clipID := chi.URLParam(r, "clipID")
-	err := cr.deleteClip.Execute(r.Context(), clip.DeleteParams{UserID: user.ID, ClipID: clipID})
+	err := cr.crud.Delete(r.Context(), clip.DeleteParams{UserID: user.ID, ClipID: clipID})
 	if err != nil {
 		if errors.Is(err, clip.ErrNotFound) {
 			http.Error(w, "clip not found", http.StatusNotFound)
@@ -100,7 +94,7 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := UserFromContext(r.Context())
-	c, err := cr.createClip.Execute(r.Context(), clip.CreateParams{
+	c, err := cr.crud.Create(r.Context(), clip.CreateParams{
 		UserID:      user.ID,
 		ClipID:      body.ClipID,
 		Title:       body.Title,

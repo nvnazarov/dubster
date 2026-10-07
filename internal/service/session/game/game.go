@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nvnazarov/dubster/internal/blob"
-	"github.com/nvnazarov/dubster/internal/command"
+	"github.com/nvnazarov/dubster/internal/misc/blob"
+	"github.com/nvnazarov/dubster/internal/misc/command"
+	"github.com/nvnazarov/dubster/internal/misc/event"
 	"github.com/nvnazarov/dubster/internal/service/clip"
 	"github.com/nvnazarov/dubster/internal/service/session"
 )
@@ -21,8 +22,10 @@ const (
 )
 
 type Game struct {
-	gradeSession  command.Dispatcher[session.SessionID]
-	renderSession command.Dispatcher[session.SessionID]
+	gradeSession   command.Dispatcher[session.SessionID]
+	renderSession  command.Dispatcher[session.SessionID]
+	gradeConsumer  event.Consumer[EventGraded]
+	renderConsumer event.Consumer[int]
 
 	sessionID    session.SessionID
 	hostID       string
