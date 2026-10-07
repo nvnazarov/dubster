@@ -1,0 +1,60 @@
+@use "../../../style/global.scss" as g;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+  background-color: g.$color-surface-0;
+  width: 100vw;
+  height: 100vh;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+}
+
+.header {
+  display: flex;
+  gap: g.$lg;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-size: g.$font-size-xxl;
+}
+
+.body {
+  display: flex;
+  gap: g.$lg;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+  max-width: 400px;
+}
+
+.badges {
+  display: flex;
+  gap: g.$sm;
+}
+
+.actions {
+  display: flex;
+  gap: g.$md;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: g.$xs;
+}

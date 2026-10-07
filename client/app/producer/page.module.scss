@@ -1,0 +1,42 @@
+@use "../../style/global.scss" as g;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+  background-color: g.$color-surface-0;
+  width: 100vw;
+  height: 100vh;
+  align-items: center;
+}
+
+.outer {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+}
+
+.header {
+  display: flex;
+  gap: g.$md;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+}
+
+.timeline {
+}
+
+.controls {
+  display: flex;
+  justify-content: space-around;
+}

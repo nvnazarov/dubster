@@ -1,0 +1,73 @@
+@use "../../../style/global.scss" as g;
+
+.button {
+  user-select: none;
+  display: flex;
+  gap: g.$sm;
+  align-items: center;
+  border-radius: 100vmax;
+  padding: g.$sm g.$md;
+  border: none;
+  color: g.$color-surface-1000;
+  font-weight: 400;
+  font-size: g.$font-size-md;
+  transition-duration: 0.2s;
+  overflow: hidden;
+
+  &-default {
+    box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+    background-color: g.$color-surface-300;
+
+    &:hover {
+      box-shadow: g.$color-surface-400 0px 0px 0px 2px;
+    }
+  }
+
+  &-primary {
+    background-color: g.$color-surface-primary-100;
+    box-shadow: g.$color-surface-primary-400 0px 0px 0px 1px;
+
+    &:hover {
+      box-shadow: g.$color-surface-primary-400 0px 0px 0px 2px;
+    }
+  }
+
+  img {
+    filter: invert(40%);
+    width: g.$font-size-sm;
+    height: g.$font-size-sm;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background-color: white;
+  opacity: 0.1;
+  transition-duration: 0.2s;
+}
+
+.spinner {
+  width: g.$font-size-sm;
+  height: g.$font-size-sm;
+  border: 2px solid white;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: spin infinite 1s linear;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

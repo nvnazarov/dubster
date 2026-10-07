@@ -1,0 +1,13 @@
+@use "../../../style/global.scss" as g;
+
+.container {
+  user-select: none;
+  border-radius: 100vmax;
+  padding: g.$sm g.$md;
+  border: none;
+  color: g.$color-surface-1000;
+  font-weight: 400;
+  font-size: g.$font-size-md;
+  box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+  background-color: g.$color-surface-300;
+}

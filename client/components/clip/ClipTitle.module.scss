@@ -1,0 +1,7 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  max-width: 400px;
+  color: g.$color-surface-1000;
+  font-size: g.$font-size-xl;
+}

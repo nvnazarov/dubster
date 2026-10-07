@@ -1,0 +1,184 @@
+package api
+
+import (
+	"encoding/json/v2"
+	"errors"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/nvnazarov/dubster/internal/blob"
+	"github.com/nvnazarov/dubster/internal/service/clip"
+)
+
+type ClipsRouter struct {
+	chi.Router
+	deleteClip         clip.Delete
+	createClip         clip.Create
+	getClip            clip.Get
+	getClipUploadURL   clip.GetUploadURL
+	notifyClipUploaded clip.NotifyUploaded
+	getClipDownloadURL clip.GetDownloadURL
+}
+
+type ClipsRouterDependencies struct {
+	DeleteClip         clip.Delete
+	CreateClip         clip.Create
+	GetClip            clip.Get
+	GetClipUploadURL   clip.GetUploadURL
+	NotifyClipUploaded clip.NotifyUploaded
+	GetClipDownloadURL clip.GetDownloadURL
+}
+
+func NewClipsRouter(d ClipsRouterDependencies) ClipsRouter {
+	chiRouter := chi.NewRouter()
+	r := ClipsRouter{
+		chiRouter,
+		d.DeleteClip,
+		d.CreateClip,
+		d.GetClip,
+		d.GetClipUploadURL,
+		d.NotifyClipUploaded,
+		d.GetClipDownloadURL,
+	}
+	r.With(Authenticate).Post("/", r.CreateClip)
+	r.Get("/{clipID}", r.GetClip)
+	r.With(Authenticate).Delete("/{clipID}", r.DeleteClip)
+	r.With(Authenticate).Post("/{clipID}/upload", r.GetClipUploadURL)
+	r.With(Authenticate).Post("/{clipID}/uploaded", r.NotifyClipUploaded)
+	r.Get("/{clipID}/download", r.DownloadClip)
+	return r
+}
+
+func (cr *ClipsRouter) GetClip(w http.ResponseWriter, r *http.Request) {
+	clipID := chi.URLParam(r, "clipID")
+	c, err := cr.getClip.Execute(r.Context(), clip.GetParams{ClipID: clipID})
+	if err != nil {
+		if errors.Is(err, clip.ErrNotFound) {
+			http.Error(w, "clip not found", http.StatusNotFound)
+			return
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
+	if err := json.MarshalWrite(w, c); err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (cr *ClipsRouter) DeleteClip(w http.ResponseWriter, r *http.Request) {
+	user := UserFromContext(r.Context())
+	clipID := chi.URLParam(r, "clipID")
+	err := cr.deleteClip.Execute(r.Context(), clip.DeleteParams{UserID: user.ID, ClipID: clipID})
+	if err != nil {
+		if errors.Is(err, clip.ErrNotFound) {
+			http.Error(w, "clip not found", http.StatusNotFound)
+			return
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ClipID      string                  `json:"id"`
+		Title       string                  `json:"title"`
+		Description string                  `json:"description"`
+		Segments    map[string]clip.Segment `json:"segments"`
+		Roles       map[string]clip.Role    `json:"roles"`
+	}
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
+		if err, ok := errors.AsType[*json.SemanticError](err); ok {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	user := UserFromContext(r.Context())
+	c, err := cr.createClip.Execute(r.Context(), clip.CreateParams{
+		UserID:      user.ID,
+		ClipID:      body.ClipID,
+		Title:       body.Title,
+		Description: body.Description,
+		Segments:    body.Segments,
+		Roles:       body.Roles,
+	})
+	if err != nil {
+		if err, ok := errors.AsType[clip.InvalidParams](err); ok {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	if err := json.MarshalWrite(w, c); err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (cr *ClipsRouter) GetClipUploadURL(w http.ResponseWriter, r *http.Request) {
+	user := UserFromContext(r.Context())
+	clipID := chi.URLParam(r, "clipID")
+	url, err := cr.getClipUploadURL.Execute(r.Context(), clip.GetUploadURLParams{
+		UserID: user.ID,
+		ClipID: clipID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, clip.ErrNotFound):
+			http.Error(w, "clip not found", http.StatusNotFound)
+			return
+		case errors.Is(err, clip.ErrNotOwned):
+			http.Error(w, "clip not owned", http.StatusUnauthorized)
+			return
+		default:
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
+	out := struct {
+		URL string `json:"url"`
+	}{
+		URL: url.String(),
+	}
+	if err := json.MarshalWrite(w, out); err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (cr *ClipsRouter) NotifyClipUploaded(w http.ResponseWriter, r *http.Request) {
+	user := UserFromContext(r.Context())
+	clipID := chi.URLParam(r, "clipID")
+	if err := cr.notifyClipUploaded.Execute(r.Context(), clip.NotifyUploadedParams{
+		UserID: user.ID,
+		ClipID: clipID,
+	}); err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (cr *ClipsRouter) DownloadClip(w http.ResponseWriter, r *http.Request) {
+	clipID := chi.URLParam(r, "clipID")
+	url, err := cr.getClipDownloadURL.Execute(r.Context(), clipID)
+	if err != nil {
+		switch {
+		case errors.Is(err, blob.ErrNotFound):
+			http.Error(w, "clip not found", http.StatusNotFound)
+			return
+		default:
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.Header().Add("Location", url.String())
+}

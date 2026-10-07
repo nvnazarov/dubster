@@ -1,0 +1,9 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  width: 400px;
+  height: calc(1080 / 1920 * 400px);
+  background-color: g.$color-surface-200;
+  border-radius: 10px;
+  border: 1px solid g.$color-surface-400;
+}

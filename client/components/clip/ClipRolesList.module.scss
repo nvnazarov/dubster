@@ -1,0 +1,18 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: g.$sm;
+}
+
+.label {
+  user-select: none;
+  color: g.$color-surface-700;
+}
+
+.roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: g.$md;
+}

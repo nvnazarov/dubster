@@ -1,0 +1,19 @@
+@use "../../../style/global.scss" as g;
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: g.$md;
+  height: g.$md;
+  border-radius: 50%;
+  border: 2px solid g.$color-surface-700;
+  border-top: 2px solid transparent;
+  animation: spin 1s linear infinite;
+}

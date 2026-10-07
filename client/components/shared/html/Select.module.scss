@@ -1,0 +1,21 @@
+@use "../../../style/global.scss" as g;
+
+.container {
+  outline: none;
+  user-select: none;
+  border-radius: 100vmax;
+  padding: g.$sm g.$md;
+  border: none;
+  color: g.$color-surface-1000;
+  font-weight: 400;
+  font-size: g.$font-size-md;
+  transition-duration: 0.2s;
+  background-color: g.$color-surface-200;
+  box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+  &:hover {
+    box-shadow: g.$color-surface-400 0px 0px 0px 2px;
+  }
+  &:focus {
+    box-shadow: g.$color-surface-primary-400 0px 0px 0px 2px;
+  }
+}

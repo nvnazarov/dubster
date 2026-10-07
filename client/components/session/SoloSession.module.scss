@@ -1,0 +1,17 @@
+@use "../../style/global.scss" as g;
+
+.outer {
+  display: flex;
+  gap: g.$md;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+}
+
+.panel {
+  display: flex;
+  gap: g.$md;
+}

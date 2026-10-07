@@ -1,0 +1,18 @@
+@use "../style/global.scss" as g;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: g.$color-surface-0;
+  width: 100vw;
+  height: 100vh;
+
+  > p {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    color: white;
+  }
+}

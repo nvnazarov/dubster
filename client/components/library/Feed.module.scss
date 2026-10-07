@@ -1,0 +1,28 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: g.$md;
+}
+
+.feed {
+  flex: 1;
+  position: relative;
+  overflow-y: scroll;
+
+  &::-webkit-scrollbar {
+    width: 0px;
+  }
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: g.$color-surface-700;
+  text-align: center;
+  font-size: g.$font-size-md;
+  height: 100px;
+}

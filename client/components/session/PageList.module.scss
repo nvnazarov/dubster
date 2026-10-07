@@ -1,0 +1,30 @@
+@use "../../style/global.scss" as g;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+}
+
+.tab {
+  padding: g.$sm g.$md;
+  border-radius: 10px;
+  color: g.$color-surface-1000;
+  transition-duration: 0.2s;
+
+  &-active {
+    background-color: g.$color-surface-primary-100;
+    box-shadow: g.$color-surface-primary-400 0px 0px 0px 1px;
+    &:hover {
+      box-shadow: g.$color-surface-primary-400 0px 0px 0px 2px;
+    }
+  }
+
+  &-default {
+    background-color: g.$color-surface-300;
+    box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+    &:hover {
+      box-shadow: g.$color-surface-400 0px 0px 0px 2px;
+    }
+  }
+}

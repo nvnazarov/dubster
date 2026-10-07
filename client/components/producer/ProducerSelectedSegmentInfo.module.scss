@@ -1,0 +1,11 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: g.$md;
+  background-color: g.$color-surface-200;
+  border: 1px solid g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding: g.$md;
+}

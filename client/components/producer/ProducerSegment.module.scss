@@ -1,0 +1,7 @@
+@use "../../style/global.scss" as g;
+
+.segment {
+  position: absolute;
+  height: 100%;
+  border-radius: g.$radius-sm;
+}

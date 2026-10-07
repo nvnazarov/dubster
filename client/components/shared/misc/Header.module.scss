@@ -1,0 +1,13 @@
+@use "../../../style/global.scss" as g;
+
+.header {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  justify-content: start;
+  padding: g.$md g.$md;
+  background-color: g.$color-surface-100;
+  border-bottom: 1px solid g.$color-surface-200;
+  z-index: 1;
+  align-items: center;
+}

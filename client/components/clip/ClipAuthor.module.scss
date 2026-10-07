@@ -1,0 +1,11 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  font-size: g.$font-size-sm;
+  color: g.$color-surface-700;
+  cursor: pointer;
+}
+
+.at {
+  user-select: none;
+}

@@ -1,0 +1,12 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: g.$sm;
+}
+
+.role {
+  display: flex;
+  gap: g.$sm;
+}

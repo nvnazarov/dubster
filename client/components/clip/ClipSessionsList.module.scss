@@ -1,0 +1,28 @@
+@use "../../style/global.scss" as g;
+
+.empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px dashed g.$color-surface-400;
+  border-radius: g.$radius-md;
+  padding: g.$md;
+  color: g.$color-surface-900;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: g.$sm;
+}
+
+.label {
+  user-select: none;
+  color: g.$color-surface-700;
+}
+
+.sessions {
+  display: flex;
+  flex-direction: column;
+  gap: g.$sm;
+}

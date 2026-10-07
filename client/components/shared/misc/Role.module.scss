@@ -1,0 +1,34 @@
+@use "../../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: g.$sm;
+  color: g.$color-surface-1000;
+  background-color: g.$color-surface-100;
+  border: 1px solid g.$color-surface-300;
+  border-radius: 5px;
+  padding: g.$sm;
+}
+
+.female {
+  font-family: "Courier New", Courier, monospace;
+  background-color: rgb(86, 17, 28);
+  border: 1px solid rgb(174, 56, 75);
+  padding: g.$xs g.$sm;
+  border-radius: 5px;
+}
+
+.male {
+  font-family: "Courier New", Courier, monospace;
+  background-color: rgb(15, 15, 80);
+  border: 1px solid rgb(58, 58, 203);
+  padding: g.$xs g.$sm;
+  border-radius: 5px;
+}
+
+.badges {
+  display: flex;
+  gap: g.$sm;
+}

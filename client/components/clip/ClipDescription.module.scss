@@ -1,0 +1,6 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  color: g.$color-surface-900;
+  font-size: g.$font-size-md;
+}

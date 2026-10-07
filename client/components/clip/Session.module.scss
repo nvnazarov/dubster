@@ -1,0 +1,17 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  background-color: g.$color-surface-200;
+  box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+  border-radius: g.$radius-md;
+  padding: g.$sm g.$md;
+  color: g.$color-surface-900;
+  transition-duration: 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: g.$color-surface-400 0px 0px 0px 2px;
+  }
+}
