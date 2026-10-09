@@ -2,6 +2,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -13,9 +14,9 @@ type Routers struct {
 	Sessions SessionsRouter
 }
 
-func ListenAndServe(address string, routers Routers) error {
+func ListenAndServe(address string, routers Routers, logger *log.Logger) error {
 	r := chi.NewRouter()
-	r.Route("/api/v1", func(r chi.Router) {
+	r.With(Log(logger)).Route("/api/v1", func(r chi.Router) {
 		r.Mount("/library", routers.Library)
 		r.Mount("/clips", routers.Clips)
 		r.Mount("/sessions", routers.Sessions)

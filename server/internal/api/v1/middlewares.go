@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"log"
 	"net/http"
 )
 
@@ -30,4 +31,13 @@ func Authenticate(next http.Handler) http.Handler {
 		ctx := ContextWithUser(r.Context(), User{ID: "0"})
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func Log(logger *log.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+			logger.Printf("%v %v %v %v\n", r.Method, r.RequestURI)
+		})
+	}
 }

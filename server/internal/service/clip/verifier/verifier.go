@@ -49,16 +49,18 @@ type Event struct {
 }
 
 type Dependencies struct {
-	Blobs   blob.OpenReader
-	Clips   clip.Repository
-	Handler command.Handler[string]
+	Blobs     blob.OpenReader
+	Clips     clip.Repository
+	Handler   command.Handler[string]
+	Publisher event.Publisher[Event]
 }
 
 func New(d Dependencies) Verifier {
 	return Verifier{
-		blobs:   d.Blobs,
-		clips:   d.Clips,
-		handler: d.Handler,
+		blobs:     d.Blobs,
+		clips:     d.Clips,
+		handler:   d.Handler,
+		publisher: d.Publisher,
 	}
 }
 

@@ -16,6 +16,27 @@ services:
     build:
       context: "./server"
       target: "production"
+    environment:
+      DUBSTER__SERVER__HOST: "0.0.0.0"
+      DUBSTER__SERVER__PORT: 80
+      DUBSTER__POSTGRES__DB: ${DUBSTER__POSTGRES__DB?}
+      DUBSTER__POSTGRES__USER: ${DUBSTER__POSTGRES__USER?}
+      DUBSTER__POSTGRES__PASSWORD: ${DUBSTER__POSTGRES__PASSWORD?}
+      DUBSTER__POSTGRES__HOST: "postgres"
+      DUBSTER__POSTGRES__PORT: 5432
+      DUBSTER__S3__ACCESS_KEY: ${DUBSTER__S3__ACCESS_KEY?}
+      DUBSTER__S3__SECRET_KEY: ${DUBSTER__S3__SECRET_KEY?}
+      DUBSTER__S3__ENDPOINT: http://seaweedfs:8333/
+      DUBSTER__S3__DOWNLOAD_URL__EXPIRY: ${DUBSTER__S3__DOWNLOAD_URL__EXPIRY}
+      DUBSTER__S3__UPLOAD_URL__EXPIRY: ${DUBSTER__S3__UPLOAD_URL__EXPIRY}
+      DUBSTER__SESSION__MAX_PARTICIPANTS: ${DUBSTER__SESSION__MAX_PARTICIPANTS}
+      DUBSTER__SESSION__EXPIRY: ${DUBSTER__SESSION__EXPIRY}
+      DUBSTER__CLIP__MAX_SIZE: ${DUBSTER__CLIP__MAX_SIZE}
+      DUBSTER__CLIP__MAX_DURATION: ${DUBSTER__CLIP__MAX_DURATION}
+      DUBSTER__CLIP__MAX_ROLES: ${DUBSTER__CLIP__MAX_ROLES}
+      DUBSTER__CLIP__MAX_SEGMENTS: ${DUBSTER__CLIP__MAX_SEGMENTS}
+    ports:
+      - "8080:80"
     networks:
       - "private"
     depends_on:
@@ -29,13 +50,13 @@ services:
     volumes:
       - "postgres:/var/lib/postgresql"
     environment:
-      - "POSTGRES_DB=${DUBSTER__SERVER__POSTGRES__DB?}"
-      - "POSTGRES_USER=${DUBSTER__SERVER__POSTGRES__USER?}"
-      - "POSTGRES_PASSWORD=${DUBSTER__SERVER__POSTGRES__PASSWORD?}"
+      POSTGRES_DB: ${DUBSTER__POSTGRES__DB?}
+      POSTGRES_USER: ${DUBSTER__POSTGRES__USER?}
+      POSTGRES_PASSWORD: ${DUBSTER__POSTGRES__PASSWORD?}
     networks:
       - "private"
     healthcheck:
-      test: "pg_isready -U ${DUBSTER__SERVER__POSTGRES__USER?}"
+      test: "pg_isready -U ${DUBSTER__POSTGRES__USER?}"
       interval: "10s"
       timeout: "5s"
       retries: 3
@@ -44,8 +65,8 @@ services:
     image: "chrislusf/seaweedfs:latest"
     command: "mini -dir=/data"
     environment:
-      AWS_ACCESS_KEY_ID: ${DUBSTER__SERVER__S3__ACCESS_KEY?}
-      AWS_SECRET_ACCESS_KEY: ${DUBSTER__SERVER__S3__SECRET_KEY?}
+      AWS_ACCESS_KEY_ID: ${DUBSTER__S3__ACCESS_KEY?}
+      AWS_SECRET_ACCESS_KEY: ${DUBSTER__S3__SECRET_KEY?}
     volumes:
       - "seaweedfs:/data"
     networks:
