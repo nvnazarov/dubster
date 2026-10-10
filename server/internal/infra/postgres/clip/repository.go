@@ -1,4 +1,4 @@
-package postgres
+package clip
 
 import (
 	"context"
@@ -11,15 +11,15 @@ import (
 	"github.com/nvnazarov/dubster/server/internal/service/library"
 )
 
-type Library struct {
+type Repository struct {
 	pool *pgxpool.Pool
 }
 
 type Tx struct {
 }
 
-func NewLibrary(pool *pgxpool.Pool) Library {
-	return Library{pool: pool}
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{pool: pool}
 }
 
 type cursor struct {
@@ -46,7 +46,7 @@ func (c *cursor) decode(encoded string) error {
 	return errorsutil.WrapError(err)
 }
 
-func (Library) NewCursor(ctx context.Context, params library.SearchParams) (string, error) {
+func (r *Repository) NewCursor(ctx context.Context, params library.SearchParams) (string, error) {
 	c := cursor{
 		Order:         params.Order,
 		AuthorID:      params.AuthorID,
@@ -56,12 +56,12 @@ func (Library) NewCursor(ctx context.Context, params library.SearchParams) (stri
 	return c.encode()
 }
 
-func (lib Library) BatchAt(ctx context.Context, encodedCursor string) (library.Batch, error) {
+func (r *Repository) BatchAt(ctx context.Context, encodedCursor string) (library.Batch, error) {
 	var c cursor
 	if err := c.decode(encodedCursor); err != nil {
 		return library.Batch{}, err
 	}
-	rows, err := lib.pool.Query(ctx, `
+	rows, err := r.pool.Query(ctx, `
 	SELECT
 		id,
 		title,
@@ -87,19 +87,19 @@ func (lib Library) BatchAt(ctx context.Context, encodedCursor string) (library.B
 	return library.Batch{}, nil
 }
 
-func (lib Library) Save(ctx context.Context, clip clip.Clip) error {
+func (r *Repository) Save(ctx context.Context, clip clip.Clip) error {
 	panic("not implemented")
 }
 
-func (lib Library) Get(ctx context.Context, clipID string) (clip.Clip, error) {
+func (r *Repository) Get(ctx context.Context, clipID string) (clip.Clip, error) {
 	panic("not implemented")
 }
 
-func (lib Library) Delete(ctx context.Context, clipID string) error {
+func (r *Repository) Delete(ctx context.Context, clipID string) error {
 	panic("not implemented")
 }
 
-func (lib Library) BeginTx(ctx context.Context) (clip.Tx, error) {
+func (r *Repository) BeginTx(ctx context.Context) (clip.Tx, error) {
 	panic("not implemented")
 }
 

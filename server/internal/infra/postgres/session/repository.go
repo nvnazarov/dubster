@@ -11,8 +11,8 @@ type Repository struct {
 	pool *pgxpool.Pool
 }
 
-func NewRepository(pool *pgxpool.Pool) Repository {
-	return Repository{pool: pool}
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{pool: pool}
 }
 
 func (r *Repository) ByParticipant(ctx context.Context, userID string) ([]session.Session, error) {

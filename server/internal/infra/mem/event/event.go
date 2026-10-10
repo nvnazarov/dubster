@@ -2,7 +2,7 @@ package event
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"sync"
 
 	"github.com/nvnazarov/dubster/server/internal/misc/event"
@@ -14,11 +14,11 @@ type Key string
 
 type Queue struct {
 	queues map[Key]*queue
-	logger *log.Logger
+	logger *slog.Logger
 	mu     *sync.Mutex
 }
 
-func NewQueue(logger *log.Logger) *Queue {
+func NewQueue(logger *slog.Logger) *Queue {
 	return &Queue{
 		queues: map[Key]*queue{},
 		logger: logger,
@@ -30,7 +30,7 @@ func (q *Queue) ensure(key Key) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	if _, ok := q.queues[key]; !ok {
-		q.logger.Printf("events queue: creating queue for key: %v\n", key)
+		q.logger.Debug("events queue: creating queue for key", slog.String("key", string(key)))
 		q.queues[key] = &queue{
 			key:  key,
 			buf:  make([]any, bufferSize),
@@ -50,7 +50,7 @@ type queue struct {
 
 type publisher[T any] struct {
 	queue  *queue
-	logger *log.Logger
+	logger *slog.Logger
 }
 
 func (p *publisher[T]) Publish(ctx context.Context, event T) error {
@@ -59,7 +59,10 @@ func (p *publisher[T]) Publish(ctx context.Context, event T) error {
 	p.queue.buf[p.queue.index%len(p.queue.buf)] = event
 	p.queue.index += 1
 	p.queue.cond.Broadcast()
-	p.logger.Print("events queue[%v]: published event: %+v\n", p.queue.key, event)
+	p.logger.Debug("events queue: published an event",
+		slog.String("key", string(p.queue.key)),
+		slog.Any("event", event),
+	)
 	return nil
 }
 
@@ -74,7 +77,7 @@ func Publisher[T any](q *Queue, key Key) event.Publisher[T] {
 type consumer[T any] struct {
 	index  int
 	queue  *queue
-	logger *log.Logger
+	logger *slog.Logger
 }
 
 func (c *consumer[T]) Consume(ctx context.Context) (T, error) {
@@ -99,16 +102,22 @@ func (c *consumer[T]) Consume(ctx context.Context) (T, error) {
 			}
 		}
 		if c.index+len(c.queue.buf) < c.queue.index {
-			c.logger.Printf("events queue[%v]: skipping overwritten events", c.queue.key)
+			c.logger.Warn("events queue: skipping overwritten events", slog.String("key", string(c.queue.key)))
 			c.index = c.queue.index - len(c.queue.buf)
 		}
 		event := c.queue.buf[c.index%len(c.queue.buf)]
 		c.index += 1
 		if casted, ok := event.(T); ok {
-			c.logger.Printf("events queue[%v]: consumed event: %+v\n", c.queue.key, event)
+			c.logger.Debug("events queue: consumed an event",
+				slog.String("key", string(c.queue.key)),
+				slog.Any("event", event),
+			)
 			return casted, nil
 		}
-		c.logger.Printf("events queue[%v]: corrupted event: %+v\n", c.queue.key, event)
+		c.logger.Error("events queue: corrupted event",
+			slog.String("key", string(c.queue.key)),
+			slog.Any("event", event),
+		)
 	}
 }
 

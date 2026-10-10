@@ -3,6 +3,7 @@ package clip
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"testing"
 )
 
@@ -48,7 +49,7 @@ func TestDeleteClip_ChecksClipOwnership(t *testing.T) {
 			"1": Clip{AuthorID: "1"},
 		},
 	}
-	crud := NewCRUD(db)
+	crud := NewCRUD(CRUDOptions{Clips: db, Logger: slog.Default()})
 	err := crud.Delete(context.Background(), DeleteParams{UserID: "2", ClipID: "1"})
 	if !errors.Is(err, ErrNotOwned) {
 		t.Fatalf("returned error is not ErrNotOwned: %v", err)
@@ -64,7 +65,7 @@ func TestDeleteClip_DeletesClip(t *testing.T) {
 			"1": Clip{AuthorID: "1"},
 		},
 	}
-	crud := NewCRUD(db)
+	crud := NewCRUD(CRUDOptions{Clips: db, Logger: slog.Default()})
 	err := crud.Delete(context.Background(), DeleteParams{UserID: "1", ClipID: "1"})
 	if err != nil {
 		t.Fatalf("returned error is not nil: %v", err)

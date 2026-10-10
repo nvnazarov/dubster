@@ -3,6 +3,7 @@ package grader
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/nvnazarov/dubster/server/internal/misc/blob"
@@ -17,27 +18,30 @@ type Grader struct {
 	sessions   session.Repository
 	recordings blob.OpenReader
 	videos     blob.OpenReader
-	handler    command.Handler[session.SessionID]
-	publisher  event.Publisher[session.SessionID]
+	handler    command.Handler[string]
+	publisher  event.Publisher[string]
+	logger     *slog.Logger
 }
 
-type Dependencies struct {
+type Options struct {
 	Clips      clip.Repository
 	Sessions   session.Repository
 	Recordings blob.OpenReader
 	Videos     blob.OpenReader
-	Handler    command.Handler[session.SessionID]
-	Publisher  event.Publisher[session.SessionID]
+	Handler    command.Handler[string]
+	Publisher  event.Publisher[string]
+	Logger     *slog.Logger
 }
 
-func New(d Dependencies) Grader {
+func New(o Options) Grader {
 	return Grader{
-		clips:      d.Clips,
-		sessions:   d.Sessions,
-		videos:     d.Videos,
-		recordings: d.Recordings,
-		handler:    d.Handler,
-		publisher:  d.Publisher,
+		clips:      o.Clips,
+		sessions:   o.Sessions,
+		videos:     o.Videos,
+		recordings: o.Recordings,
+		handler:    o.Handler,
+		publisher:  o.Publisher,
+		logger:     o.Logger,
 	}
 }
 
@@ -57,7 +61,7 @@ func (g *Grader) Run(ctx context.Context) error {
 	}
 }
 
-func (g *Grader) handle(ctx context.Context, cmd command.Command[session.SessionID]) {
+func (g *Grader) handle(ctx context.Context, cmd command.Command[string]) {
 	defer func() {
 		if err := cmd.Rollback(ctx); err != nil {
 			// TODO: log error.
@@ -77,7 +81,7 @@ func (g *Grader) handle(ctx context.Context, cmd command.Command[session.Session
 	}
 }
 
-func (g *Grader) grade(ctx context.Context, sessionID session.SessionID) error {
+func (g *Grader) grade(ctx context.Context, sessionID string) error {
 	session, err := g.sessions.Get(ctx, sessionID)
 	if err != nil {
 		return err

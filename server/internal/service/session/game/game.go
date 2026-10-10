@@ -22,12 +22,12 @@ const (
 )
 
 type Game struct {
-	gradeSession   command.Dispatcher[session.SessionID]
-	renderSession  command.Dispatcher[session.SessionID]
+	gradeSession   command.Dispatcher[string]
+	renderSession  command.Dispatcher[string]
 	gradeConsumer  event.Consumer[EventGraded]
 	renderConsumer event.Consumer[int]
 
-	sessionID    session.SessionID
+	sessionID    string
 	hostID       string
 	finished     map[string]struct{}
 	participants map[string]struct{}

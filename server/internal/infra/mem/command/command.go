@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -18,11 +18,11 @@ type Key string
 
 type Queue struct {
 	queues map[Key]*queue
-	logger *log.Logger
+	logger *slog.Logger
 	mu     *sync.Mutex
 }
 
-func NewQueue(logger *log.Logger) *Queue {
+func NewQueue(logger *slog.Logger) *Queue {
 	return &Queue{
 		queues: map[Key]*queue{},
 		logger: logger,
@@ -34,7 +34,7 @@ func (q *Queue) ensure(key Key) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	if _, ok := q.queues[key]; !ok {
-		q.logger.Printf("command queue: creating queue for key: %v\n", key)
+		q.logger.Debug("command queue: creating queue for key", slog.String("key", string(key)))
 		q.queues[key] = &queue{commands: make(chan any, bufferSize)}
 	}
 }
@@ -46,7 +46,7 @@ type queue struct {
 
 type dispatcher[T any] struct {
 	queue  *queue
-	logger *log.Logger
+	logger *slog.Logger
 }
 
 func (d *dispatcher[T]) Dispatch(ctx context.Context, command T) error {
@@ -56,7 +56,10 @@ func (d *dispatcher[T]) Dispatch(ctx context.Context, command T) error {
 	case <-time.After(2 * time.Second):
 		return ErrBufferOverflow
 	case d.queue.commands <- command:
-		d.logger.Printf("command queue[%v]: queued command: %+v\n", d.queue.key, command)
+		d.logger.Debug("command queue: queued a command",
+			slog.String("key", string(d.queue.key)),
+			slog.Any("cmd", command),
+		)
 		return nil
 	}
 }
@@ -89,7 +92,7 @@ func (c *cmd[T]) Rollback(ctx context.Context) error {
 
 type handler[T any] struct {
 	queue  *queue
-	logger *log.Logger
+	logger *slog.Logger
 }
 
 func (h *handler[T]) Handle(ctx context.Context) (command.Command[T], error) {
@@ -99,10 +102,16 @@ func (h *handler[T]) Handle(ctx context.Context) (command.Command[T], error) {
 			return nil, ctx.Err()
 		case c := <-h.queue.commands:
 			if casted, ok := c.(T); ok {
-				h.logger.Println("command queue[%v]: dispatched command: %+v", h.queue.key, casted)
+				h.logger.Debug("command queue: dispatched a command",
+					slog.String("key", string(h.queue.key)),
+					slog.Any("cmd", casted),
+				)
 				return &cmd[T]{data: casted, queue: h.queue}, nil
 			} else {
-				h.logger.Println("command queue[%v]: corrupted command: %+v", h.queue.key, c)
+				h.logger.Error("command queue: command corrupted",
+					slog.String("key", string(h.queue.key)),
+					slog.Any("cmd", c),
+				)
 			}
 		}
 	}

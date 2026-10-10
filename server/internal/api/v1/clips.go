@@ -1,8 +1,10 @@
 package api
 
 import (
+	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -12,15 +14,17 @@ import (
 
 type ClipsRouter struct {
 	chi.Router
-	crud         clip.CRUD
-	store        clip.Store
-	verification clip.Verification
+	crud         *clip.CRUD
+	store        *clip.Store
+	verification *clip.Verification
+	logger       *slog.Logger
 }
 
 type ClipsRouterDependencies struct {
-	CRUD         clip.CRUD
-	Store        clip.Store
-	Verification clip.Verification
+	CRUD         *clip.CRUD
+	Store        *clip.Store
+	Verification *clip.Verification
+	Logger       *slog.Logger
 }
 
 func NewClipsRouter(d ClipsRouterDependencies) ClipsRouter {
@@ -30,6 +34,7 @@ func NewClipsRouter(d ClipsRouterDependencies) ClipsRouter {
 		d.CRUD,
 		d.Store,
 		d.Verification,
+		d.Logger,
 	}
 	r.Get("/{clipID}", r.GetClip)
 	r.With(Authenticate).Post("/", r.CreateClip)
@@ -87,6 +92,11 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		if _, ok := errors.AsType[*jsontext.SyntacticError](err); ok {
+			http.Error(w, "no body", http.StatusBadRequest)
+			return
+		}
+		cr.logger.Error("create clip: parse body: fail", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -108,6 +118,7 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := json.MarshalWrite(w, c); err != nil {
+		cr.logger.Error("create clip: failed to return response", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -139,6 +150,7 @@ func (cr *ClipsRouter) GetClipUploadURL(w http.ResponseWriter, r *http.Request) 
 		URL: url.String(),
 	}
 	if err := json.MarshalWrite(w, out); err != nil {
+		cr.logger.Error("get clip upload url: failed to return response", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

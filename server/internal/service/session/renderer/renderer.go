@@ -3,6 +3,7 @@ package renderer
 import (
 	"context"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/nvnazarov/dubster/server/internal/misc/blob"
@@ -17,27 +18,30 @@ type Renderer struct {
 	clips      clip.Repository
 	recordings blob.OpenReader
 	renders    blob.OpenWriter
-	handler    command.Handler[session.SessionID]
-	publisher  event.Publisher[session.SessionID]
+	handler    command.Handler[string]
+	publisher  event.Publisher[string]
+	logger     *slog.Logger
 }
 
-type Dependencies struct {
+type Options struct {
 	Sessions   session.Repository
 	Clips      clip.Repository
 	Recordings blob.OpenReader
 	Renders    blob.OpenWriter
-	Handler    command.Handler[session.SessionID]
-	Publisher  event.Publisher[session.SessionID]
+	Handler    command.Handler[string]
+	Publisher  event.Publisher[string]
+	Logger     *slog.Logger
 }
 
-func New(d Dependencies) Renderer {
+func New(o Options) Renderer {
 	return Renderer{
-		sessions:   d.Sessions,
-		clips:      d.Clips,
-		recordings: d.Recordings,
-		renders:    d.Renders,
-		handler:    d.Handler,
-		publisher:  d.Publisher,
+		sessions:   o.Sessions,
+		clips:      o.Clips,
+		recordings: o.Recordings,
+		renders:    o.Renders,
+		handler:    o.Handler,
+		publisher:  o.Publisher,
+		logger:     o.Logger,
 	}
 }
 
@@ -57,7 +61,7 @@ func (r *Renderer) Run(ctx context.Context) error {
 	}
 }
 
-func (r *Renderer) handle(ctx context.Context, cmd command.Command[session.SessionID]) {
+func (r *Renderer) handle(ctx context.Context, cmd command.Command[string]) {
 	defer func() {
 		if err := cmd.Rollback(ctx); err != nil {
 			// TODO: log error.
@@ -77,7 +81,7 @@ func (r *Renderer) handle(ctx context.Context, cmd command.Command[session.Sessi
 	}
 }
 
-func (r *Renderer) render(ctx context.Context, sessionID session.SessionID) error {
+func (r *Renderer) render(ctx context.Context, sessionID string) error {
 	session, err := r.sessions.Get(ctx, sessionID)
 	if err != nil {
 		return err

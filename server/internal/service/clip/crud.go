@@ -3,9 +3,8 @@ package clip
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
-
-	"github.com/nvnazarov/dubster/server/internal/misc/util/errorsutil"
 )
 
 type InvalidParams error
@@ -23,11 +22,26 @@ var (
 )
 
 type CRUD struct {
-	clips Repository
+	clips           Repository
+	logger          *slog.Logger
+	maxClipRoles    int
+	maxClipSegments int
 }
 
-func NewCRUD(clips Repository) CRUD {
-	return CRUD{clips: clips}
+type CRUDOptions struct {
+	Clips           Repository
+	Logger          *slog.Logger
+	MaxClipRoles    int
+	MaxClipSegments int
+}
+
+func NewCRUD(o CRUDOptions) *CRUD {
+	return &CRUD{
+		clips:           o.Clips,
+		logger:          o.Logger,
+		maxClipRoles:    o.MaxClipRoles,
+		maxClipSegments: o.MaxClipSegments,
+	}
 }
 
 type CreateParams struct {
@@ -64,12 +78,10 @@ func (c *CRUD) Create(ctx context.Context, p CreateParams) (Clip, error) {
 	if len(clip.Segments) == 0 {
 		return clip, ErrNoSegments
 	}
-	const maxSegments = 100
-	if len(clip.Segments) > maxSegments {
+	if len(clip.Segments) > c.maxClipSegments {
 		return clip, ErrTooManySegments
 	}
-	const maxRoles = 10
-	if len(clip.Roles) > maxRoles {
+	if len(clip.Roles) > c.maxClipRoles {
 		return clip, ErrTooManyRoles
 	}
 	for id, role := range clip.Roles {
@@ -87,7 +99,8 @@ func (c *CRUD) Create(ctx context.Context, p CreateParams) (Clip, error) {
 	}
 	err := c.clips.Save(ctx, clip)
 	if err != nil {
-		return clip, errorsutil.WrapError(err)
+		c.logger.Error("clip: failed to create", slog.Any("error", err))
+		return clip, err
 	}
 	return clip, nil
 }
@@ -97,7 +110,12 @@ type DeleteParams struct {
 	ClipID string
 }
 
-func (c *CRUD) Delete(ctx context.Context, p DeleteParams) error {
+func (c *CRUD) Delete(ctx context.Context, p DeleteParams) (err error) {
+	defer func() {
+		if err != nil {
+			c.logger.Error("clip: failed to delete", slog.Any("error", err))
+		}
+	}()
 	tx, err := c.clips.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -117,5 +135,9 @@ func (c *CRUD) Delete(ctx context.Context, p DeleteParams) error {
 }
 
 func (c *CRUD) Get(ctx context.Context, clipID string) (Clip, error) {
-	return c.clips.Get(ctx, clipID)
+	clip, err := c.clips.Get(ctx, clipID)
+	if err != nil {
+		c.logger.Error("clip: failed to get", slog.Any("error", err))
+	}
+	return clip, err
 }

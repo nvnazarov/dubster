@@ -8,5 +8,5 @@ type Repository interface {
 	SaveGraded(ctx context.Context, session Session) error
 	SaveRendered(ctx context.Context, session Session) error
 	SaveFinished(ctx context.Context, session Session) error
-	Get(ctx context.Context, sessionID SessionID) (Session, error)
+	Get(ctx context.Context, sessionID string) (Session, error)
 }

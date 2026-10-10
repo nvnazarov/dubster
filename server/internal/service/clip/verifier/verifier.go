@@ -5,12 +5,14 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/abema/go-mp4"
 	"github.com/nvnazarov/dubster/server/internal/misc/blob"
 	"github.com/nvnazarov/dubster/server/internal/misc/command"
 	"github.com/nvnazarov/dubster/server/internal/misc/event"
+	"github.com/nvnazarov/dubster/server/internal/misc/size"
 	"github.com/nvnazarov/dubster/server/internal/service/clip"
 )
 
@@ -28,18 +30,16 @@ var (
 	ErrEmptyTitle      VerificationError = errors.New("empty title")
 )
 
-const (
-	MaxSizeBytes = 200 << 20
-	MaxDuration  = 2 * time.Minute
-	MaxSegments  = 100
-	MaxRoles     = 20
-)
-
 type Verifier struct {
-	blobs     blob.OpenReader
-	clips     clip.Repository
-	handler   command.Handler[string]
-	publisher event.Publisher[Event]
+	blobs           blob.OpenReader
+	clips           clip.Repository
+	handler         command.Handler[string]
+	publisher       event.Publisher[Event]
+	logger          *slog.Logger
+	maxClipSize     size.Size
+	maxClipDuration time.Duration
+	maxClipSegments int
+	maxClipRoles    int
 }
 
 type Event struct {
@@ -48,19 +48,29 @@ type Event struct {
 	DateVerified time.Time
 }
 
-type Dependencies struct {
-	Blobs     blob.OpenReader
-	Clips     clip.Repository
-	Handler   command.Handler[string]
-	Publisher event.Publisher[Event]
+type Options struct {
+	Blobs           blob.OpenReader
+	Clips           clip.Repository
+	Handler         command.Handler[string]
+	Publisher       event.Publisher[Event]
+	Logger          *slog.Logger
+	MaxClipSize     size.Size
+	MaxClipDuration time.Duration
+	MaxClipSegments int
+	MaxClipRoles    int
 }
 
-func New(d Dependencies) Verifier {
+func New(d Options) Verifier {
 	return Verifier{
-		blobs:     d.Blobs,
-		clips:     d.Clips,
-		handler:   d.Handler,
-		publisher: d.Publisher,
+		blobs:           d.Blobs,
+		clips:           d.Clips,
+		handler:         d.Handler,
+		publisher:       d.Publisher,
+		logger:          d.Logger,
+		maxClipSize:     d.MaxClipSize,
+		maxClipDuration: d.MaxClipDuration,
+		maxClipSegments: d.MaxClipSegments,
+		maxClipRoles:    d.MaxClipRoles,
 	}
 }
 
@@ -127,10 +137,10 @@ func (r *Verifier) verify(ctx context.Context, clip clip.Clip) error {
 	if len(clip.Segments) == 0 {
 		return ErrNoSegments
 	}
-	if len(clip.Segments) > MaxSegments {
+	if len(clip.Segments) > r.maxClipSegments {
 		return ErrTooManySegments
 	}
-	if len(clip.Roles) > MaxRoles {
+	if len(clip.Roles) > r.maxClipRoles {
 		return ErrTooManyRoles
 	}
 	roles := make(map[string]struct{})
@@ -148,7 +158,7 @@ func (r *Verifier) verify(ctx context.Context, clip clip.Clip) error {
 		return err
 	}
 	defer blob.Close()
-	blobBytes, err := io.ReadAll(io.LimitReader(blob, MaxSizeBytes+1))
+	blobBytes, err := io.ReadAll(io.LimitReader(blob, int64(r.maxClipSize.B())+1))
 	if err != nil {
 		return err
 	}
@@ -157,9 +167,9 @@ func (r *Verifier) verify(ctx context.Context, clip clip.Clip) error {
 		return ErrNotAVideo
 	}
 	switch {
-	case len(blobBytes) > MaxSizeBytes:
+	case len(blobBytes) > r.maxClipSize.B():
 		return ErrTooBig
-	case time.Duration(probeInfo.Duration*1e6) > MaxDuration:
+	case time.Duration(probeInfo.Duration*1e6) > r.maxClipDuration:
 		return ErrTooLong
 	}
 	return nil

@@ -2,11 +2,9 @@ package session
 
 import "time"
 
-type SessionID string
-
 // Session represents a session once it has started.
 type Session struct {
-	ID           SessionID
+	ID           string
 	HostID       string
 	ClipID       string
 	Participants map[string]struct{}

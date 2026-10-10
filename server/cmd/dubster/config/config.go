@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	Postgres Postgres `env:",prefix=DUBSTER__POSTGRES__"`
-	S3       S3       `env:",prefix=DUBSTER__S3__"`
-	Server   Server   `env:",prefix=DUBSTER__SERVER__"`
-	Clip     Clip     `env:",prefix=DUBSTER__CLIP__"`
-	Session  Session  `env:",prefix=DUBSTER__SESSION__"`
+	Postgres  Postgres `env:",prefix=DUBSTER__POSTGRES__"`
+	S3        S3       `env:",prefix=DUBSTER__S3__"`
+	Server    Server   `env:",prefix=DUBSTER__SERVER__"`
+	Clip      Clip     `env:",prefix=DUBSTER__CLIP__"`
+	Session   Session  `env:",prefix=DUBSTER__SESSION__"`
+	LogsLevel string   `env:"DUBSTER__LOGS_LEVEL"`
 }
 
 type Server struct {
@@ -29,8 +30,9 @@ type Clip struct {
 }
 
 type Session struct {
-	MaxParticipants int           `env:"MAX_PARTICIPANTS,default=10"`
-	Expiry          time.Duration `env:"EXPIRY,default=1h"`
+	MaxParticipants  int           `env:"MAX_PARTICIPANTS,default=10"`
+	Expiry           time.Duration `env:"EXPIRY,default=1h"`
+	MaxRecordingSize Size          `env:"MAX_RECORDING_SIZE,default=256kb"`
 }
 
 type Postgres struct {
@@ -42,11 +44,16 @@ type Postgres struct {
 }
 
 type S3 struct {
-	AccessKey         SecretString  `env:"ACCESS_KEY,required"`
-	SecretKey         SecretString  `env:"SECRET_KEY,required"`
-	Endpoint          string        `env:"ENDPOINT,required"`
-	DownloadURLExpiry time.Duration `env:"DOWNLOAD_URL__EXPIRY,default=30m"`
-	UploadURLExpiry   time.Duration `env:"UPLOAD_URL__EXPIRY,default=30m"`
+	AccessKey              SecretString  `env:"ACCESS_KEY,required"`
+	SecretKey              SecretString  `env:"SECRET_KEY,required"`
+	Endpoint               string        `env:"ENDPOINT,required"`
+	RendersBucket          string        `env:"RENDERS__BUCKET,required"`
+	RendersDownloadExpiry  time.Duration `env:"RENDERS__DOWNLOAD_EXPIRY,default=30m"`
+	ClipsBucket            string        `env:"CLIPS__BUCKET,required"`
+	ClipsDownloadExpiry    time.Duration `env:"CLIPS__DOWNLOAD_EXPIRY,default=30m"`
+	ClipsUploadExpiry      time.Duration `env:"CLIPS__UPLOAD_EXPIRY,default=30m"`
+	RecordingsBucket       string        `env:"RECORDINGS__BUCKET,required"`
+	RecordingsUploadExpiry time.Duration `env:"RECORDINGS__UPLOAD_EXPIRY,default=5m"`
 }
 
 type SecretString string

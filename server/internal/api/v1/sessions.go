@@ -95,3 +95,7 @@ func (cr *SessionsRouter) CreateSession(w http.ResponseWriter, r *http.Request) 
 func (cr *SessionsRouter) DownloadRender(w http.ResponseWriter, r *http.Request) {
 
 }
+
+func (sr *SessionsRouter) MySessions(w http.ResponseWriter, r *http.Request) {
+
+}

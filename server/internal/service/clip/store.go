@@ -2,6 +2,7 @@ package clip
 
 import (
 	"context"
+	"log/slog"
 	"net/url"
 
 	"github.com/nvnazarov/dubster/server/internal/misc/blob"
@@ -13,15 +14,23 @@ type Store struct {
 		blob.Uploader
 		blob.Downloader
 	}
+	logger *slog.Logger
 }
 
-func NewStore(store interface {
-	blob.Uploader
-	blob.Downloader
-}, clips Repository) Store {
-	return Store{
-		store: store,
-		clips: clips,
+type StoreOptions struct {
+	Clips Repository
+	Store interface {
+		blob.Uploader
+		blob.Downloader
+	}
+	Logger *slog.Logger
+}
+
+func NewStore(o StoreOptions) *Store {
+	return &Store{
+		store:  o.Store,
+		clips:  o.Clips,
+		logger: o.Logger,
 	}
 }
 
@@ -30,7 +39,12 @@ type StoreUploadURLParams struct {
 	ClipID string
 }
 
-func (s *Store) UploadURL(ctx context.Context, p StoreUploadURLParams) (*url.URL, error) {
+func (s *Store) UploadURL(ctx context.Context, p StoreUploadURLParams) (url *url.URL, err error) {
+	defer func() {
+		if err != nil {
+			s.logger.Error("clip store: failed to create upload url", slog.Any("error", err))
+		}
+	}()
 	tx, err := s.clips.BeginTx(ctx)
 	if err != nil {
 		return nil, err
@@ -55,8 +69,13 @@ func (s *Store) UploadURL(ctx context.Context, p StoreUploadURLParams) (*url.URL
 	return s.store.UploadURL(ctx, p.ClipID)
 }
 
-func (s *Store) DownloadURL(ctx context.Context, clipID string) (*url.URL, error) {
-	_, err := s.clips.Get(ctx, clipID)
+func (s *Store) DownloadURL(ctx context.Context, clipID string) (url *url.URL, err error) {
+	defer func() {
+		if err != nil {
+			s.logger.Error("clip store: failed to create download url", slog.Any("error", err))
+		}
+	}()
+	_, err = s.clips.Get(ctx, clipID)
 	if err != nil {
 		return nil, err
 	}

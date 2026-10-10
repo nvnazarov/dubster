@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -33,11 +33,14 @@ func Authenticate(next http.Handler) http.Handler {
 	})
 }
 
-func Log(logger *log.Logger) func(http.Handler) http.Handler {
+func Log(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r)
-			logger.Printf("%v %v %v %v\n", r.Method, r.RequestURI)
+			logger.Debug("handled request",
+				slog.String("method", r.Method),
+				slog.String("uri", r.RequestURI),
+			)
 		})
 	}
 }
