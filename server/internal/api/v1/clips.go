@@ -1,6 +1,7 @@
 package api
 
 import (
+	jsonv1 "encoding/json"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
@@ -57,7 +58,7 @@ func (cr *ClipsRouter) GetClip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := json.MarshalWrite(w, c); err != nil {
+	if err := json.MarshalWrite(w, c, jsonv1.FormatDurationAsNano(true)); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -87,7 +88,7 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 		Segments    map[string]clip.Segment `json:"segments"`
 		Roles       map[string]clip.Role    `json:"roles"`
 	}
-	if err := json.UnmarshalRead(r.Body, &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body, jsonv1.FormatDurationAsNano(true)); err != nil {
 		if err, ok := errors.AsType[*json.SemanticError](err); ok {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -117,7 +118,7 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	if err := json.MarshalWrite(w, c); err != nil {
+	if err := json.MarshalWrite(w, c, jsonv1.FormatDurationAsNano(true)); err != nil {
 		cr.logger.Error("create clip: failed to return response", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -149,7 +150,7 @@ func (cr *ClipsRouter) GetClipUploadURL(w http.ResponseWriter, r *http.Request) 
 	}{
 		URL: url.String(),
 	}
-	if err := json.MarshalWrite(w, out); err != nil {
+	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
 		cr.logger.Error("get clip upload url: failed to return response", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

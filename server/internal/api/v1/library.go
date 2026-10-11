@@ -1,6 +1,7 @@
 package api
 
 import (
+	jsonv1 "encoding/json"
 	"encoding/json/v2"
 	"errors"
 	"net/http"
@@ -61,7 +62,7 @@ func (lr *LibraryRouter) NewCursor(w http.ResponseWriter, r *http.Request) {
 	}{
 		Cursor: cursor,
 	}
-	if err := json.MarshalWrite(w, out); err != nil {
+	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -91,7 +92,7 @@ func (lr *LibraryRouter) BatchAt(w http.ResponseWriter, r *http.Request) {
 		AdvanceCursor: batch.AdvanceCursor,
 		RevertCursor:  batch.RevertCursor,
 	}
-	if err := json.MarshalWrite(w, out); err != nil {
+	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

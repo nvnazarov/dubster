@@ -23,6 +23,7 @@ type Clip struct {
 	Description  string             `json:"description"`
 	Segments     map[string]Segment `json:"segments"`
 	Roles        map[string]Role    `json:"roles"`
+	Rating       float64            `json:"rating"`
 	Verified     bool               `json:"verified"`
 	DateCreated  time.Time          `json:"dateCreated"`
 	DateVerified time.Time          `json:"dateVerified"`

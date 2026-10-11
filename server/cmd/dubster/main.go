@@ -64,6 +64,8 @@ func main() {
 		UploadExpiry:   config.S3.ClipsUploadExpiry,
 		DownloadExpiry: config.S3.ClipsDownloadExpiry,
 		MaxObjectSize:  size.Size(config.Clip.MaxSize),
+		AccessKey:      config.S3.AccessKey.String(),
+		SecretKey:      config.S3.SecretKey.String(),
 	})
 	if err != nil {
 		logger.Error("init: clips s3 bucket: failed", slog.Any("error", err))
@@ -74,6 +76,8 @@ func main() {
 		Bucket:        config.S3.RecordingsBucket,
 		UploadExpiry:  config.S3.RecordingsUploadExpiry,
 		MaxObjectSize: size.Size(config.Session.MaxRecordingSize),
+		AccessKey:     config.S3.AccessKey.String(),
+		SecretKey:     config.S3.SecretKey.String(),
 	})
 	if err != nil {
 		logger.Error("init: recordings s3 bucket: failed", slog.Any("error", err))
@@ -83,6 +87,8 @@ func main() {
 		Endpoint:       config.S3.Endpoint,
 		Bucket:         config.S3.RendersBucket,
 		DownloadExpiry: config.S3.RendersDownloadExpiry,
+		AccessKey:      config.S3.AccessKey.String(),
+		SecretKey:      config.S3.SecretKey.String(),
 	})
 	if err != nil {
 		logger.Error("init: renders s3 bucket: failed", slog.Any("error", err))
@@ -101,7 +107,7 @@ func main() {
 	const eventVerified = event.Key("verified")
 	memEventsQueue := event.NewQueue(logger)
 
-	// Setup graders - workers which grade finished sessions.
+	// Setup graders (workers which grade finished sessions).
 	for i := 0; i < 5; i++ {
 		go func(index int) {
 			grader := grader.New(grader.Options{

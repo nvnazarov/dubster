@@ -61,6 +61,7 @@ func (c *CRUD) Create(ctx context.Context, p CreateParams) (Clip, error) {
 		Description: p.Description,
 		Segments:    p.Segments,
 		Roles:       p.Roles,
+		Rating:      0,
 		Verified:    false,
 		DateCreated: time.Now(),
 	}

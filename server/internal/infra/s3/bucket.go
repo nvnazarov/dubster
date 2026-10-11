@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/nvnazarov/dubster/server/internal/misc/size"
 )
@@ -26,6 +28,8 @@ type Options struct {
 	MaxObjectSize  size.Size
 	UploadExpiry   time.Duration
 	DownloadExpiry time.Duration
+	AccessKey      string
+	SecretKey      string
 }
 
 func (o *Options) verify() error {
@@ -39,7 +43,26 @@ func NewBucket(options Options) (*Bucket, error) {
 	if err := options.verify(); err != nil {
 		return nil, err
 	}
-	client := s3.New(s3.Options{BaseEndpoint: &options.Endpoint})
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion("eu-east-1"),
+		config.WithCredentialsProvider(
+			aws.CredentialsProviderFunc(
+				func(context.Context) (aws.Credentials, error) {
+					return aws.Credentials{
+						AccessKeyID:     options.AccessKey,
+						SecretAccessKey: options.SecretKey,
+					}, nil
+				},
+			),
+		),
+	)
+	if err != nil {
+		return nil, err
+	}
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(options.Endpoint)
+		o.UsePathStyle = true
+	})
 	presignClient := s3.NewPresignClient(client)
 	return &Bucket{
 		client:         client,
