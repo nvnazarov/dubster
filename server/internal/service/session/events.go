@@ -1,4 +1,4 @@
-package game
+package session
 
 type EventRoleReleased struct {
 	UserID string
@@ -22,13 +22,13 @@ type EventUserKicked struct {
 	UserID string
 }
 
-type EventUserFinished struct {
+type EventUserDone struct {
 	UserID string
 }
 
-type EventGameStarted struct{}
+type EventRolePickingState struct{}
 
-type EventGameFinished struct{}
+type EventSegmentsVoicingState struct{}
 
 type EventGraded struct {
 	Grades map[string]float64

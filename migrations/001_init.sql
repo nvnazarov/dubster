@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS sessions(
 	grades          JSONB,
 	finished        BOOLEAN NOT NULL,
     rendered        BOOLEAN NOT NULL,
-	date_started    TIMESTAMPTZ NOT NULL,
+    date_created    TIMESTAMPTZ NOT NULL,
+	date_started    TIMESTAMPTZ,
 	date_finished   TIMESTAMPTZ,
 	date_graded     TIMESTAMPTZ,
 	date_rendered   TIMESTAMPTZ

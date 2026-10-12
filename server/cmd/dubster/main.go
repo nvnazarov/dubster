@@ -20,7 +20,7 @@ import (
 	"github.com/nvnazarov/dubster/server/internal/service/clip"
 	"github.com/nvnazarov/dubster/server/internal/service/clip/verifier"
 	"github.com/nvnazarov/dubster/server/internal/service/library"
-	"github.com/nvnazarov/dubster/server/internal/service/session/game"
+	"github.com/nvnazarov/dubster/server/internal/service/session"
 	"github.com/nvnazarov/dubster/server/internal/service/session/grader"
 	"github.com/nvnazarov/dubster/server/internal/service/session/renderer"
 )
@@ -168,12 +168,9 @@ func main() {
 		}(i)
 	}
 
-	libraryImpl := library.New(postgresClipRepository)
-	hubImpl := game.NewHub()
-
 	// Setup and run HTTP API.
 	err = api.ListenAndServe(config.Server.Address(), api.Routers{
-		Library: api.NewLibraryRouter(libraryImpl),
+		Library: api.NewLibraryRouter(library.New(postgresClipRepository)),
 		Clips: api.NewClipsRouter(api.ClipsRouterDependencies{
 			CRUD: clip.NewCRUD(clip.CRUDOptions{
 				Clips:           postgresClipRepository,
@@ -193,7 +190,11 @@ func main() {
 			}),
 			Logger: logger,
 		}),
-		Sessions: api.NewSessionsRouter(hubImpl),
+		Sessions: api.NewSessionsRouter(session.NewService(
+			postgresSessionRepository,
+			postgresClipRepository,
+			s3RendersBucket,
+		)),
 	}, logger)
 	if err != http.ErrServerClosed {
 		logger.Error("server crashed", slog.Any("error", err))

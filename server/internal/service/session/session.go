@@ -2,7 +2,6 @@ package session
 
 import "time"
 
-// Session represents a session once it has started.
 type Session struct {
 	ID           string
 	HostID       string
@@ -12,6 +11,7 @@ type Session struct {
 	Grades       map[string]float64
 	Finished     bool
 	Rendered     bool
+	DateCreated  time.Time
 	DateStarted  time.Time
 	DateFinished time.Time
 	DateGraded   time.Time

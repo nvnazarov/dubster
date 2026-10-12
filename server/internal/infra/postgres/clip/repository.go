@@ -100,7 +100,7 @@ func (r *Repository) BatchAt(ctx context.Context, encodedCursor string) (library
 	for rows.Next() {
 		var c clip.Clip
 		var segmentsJSON, rolesJSON []byte
-		rows.Scan(
+		err := rows.Scan(
 			&c.ID,
 			&c.AuthorID,
 			&c.Title,
@@ -287,8 +287,5 @@ func saveClip(ctx context.Context, exec executor, c clip.Clip) error {
 		c.DateCreated,
 		c.DateVerified,
 	)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
