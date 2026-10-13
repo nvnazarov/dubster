@@ -4,12 +4,16 @@ import { Duration } from "@/lib/util/time";
 import { DeepReadonly } from "@/lib/util/type";
 
 export interface ProducerCommand {
+  "video.open": {
+    file: Blob;
+  },
   "video.play": {
     from?: Duration;
     to?: Duration;
   };
   "video.stop": void;
   "video.continue": void;
+  "role.add": void,
 }
 
 export interface ProducerEvent {
@@ -46,16 +50,13 @@ export interface ProducerEvent {
     producer: Producer;
     segment: DeepReadonly<Segment>;
   },
-  "clip.roles.added": {
-    producer: Producer;
+  "role.added": {
     role: DeepReadonly<Role>;
   },
-  "clip.roles.removed": {
-    producer: Producer;
+  "role.removed": {
     role: DeepReadonly<Role>;
   },
-  "clip.roles.changed": {
-    producer: Producer;
+  "role.changed": {
     role: DeepReadonly<Role>;
   },
   "clip.segments.selected": {

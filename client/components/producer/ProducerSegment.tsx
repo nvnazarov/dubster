@@ -1,12 +1,11 @@
-import { CSSProperties, useCallback, useState } from "react";
-import {
-  useColorProvider,
-  useEventsQueue,
-  useProducer,
-} from "./ProducerContext";
+import { useCallback, useState } from "react";
+import { useEventsQueue } from "./ProducerContext";
 import { type ProducerSegment } from "@/lib/services/producer";
 import { Segment } from "@/lib/models";
 import { Event } from "@/lib/services/eventsQueue";
+import CyclicalColorProvider from "@/lib/impl/cyclicalColorProvider";
+
+
 
 export default function ProducerSegment({
   segment,
@@ -14,8 +13,6 @@ export default function ProducerSegment({
   segment: Pick<Segment, "id">;
 }) {
   const eq = useEventsQueue();
-  const producer = useProducer();
-  const colorProvider = useColorProvider();
   const [selected, setSelected] = useState(false);
   const [color, setColor] = useState("grey");
   const [_segment, setSegment] = useState(producer.clip.segments[segment.id]);

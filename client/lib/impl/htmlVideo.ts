@@ -39,7 +39,7 @@ export default class HTMLVideo implements Video {
 
   async seek(at: Duration): Promise<void> {
     this._html.pause();
-    this._html.currentTime = at.seconds();
+    this._html.currentTime = at.seconds;
     this._eq.publish("producer.video.seek", { video: this, at });
   }
 }

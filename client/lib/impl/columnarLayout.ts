@@ -1,4 +1,4 @@
-import { type Clip } from "@/lib/models";
+import { type Clip } from "@/lib/models/clip";
 import { type Location, type Layout } from "@/lib/services/layout";
 import { type DeepReadonly } from "@/lib/util/type";
 
@@ -24,12 +24,12 @@ export default class ColumnarLayout implements Layout {
       const height = this.minHeight + weight * (this.maxHeight - this.minHeight) + shake;
       const column = this.columns.indexOf(Math.min(...this.columns));
       this.items.push({
-        top: this.columns[column],
+        top: this.columns[column]!,
         left: (this.columnWidth + this.gap) * column,
         width: this.columnWidth,
         height,
       });
-      this.columns[column] += height + this.gap;
+      this.columns[column]! += height + this.gap;
     }
   }
 
@@ -39,7 +39,11 @@ export default class ColumnarLayout implements Layout {
   }
 
   item(index: number): Location {
-    return this.items[index];
+    const item = this.items[index];
+    if (!item) {
+      throw "out of bounds"
+    }
+    return item;
   }
 
   height(): number {

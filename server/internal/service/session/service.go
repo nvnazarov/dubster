@@ -28,7 +28,7 @@ func NewService(sessions Repository, clips clip.Repository, renders blob.Downloa
 		clips:    clips,
 		sessions: sessions,
 		renders:  renders,
-		hub:      newHub(),
+		hub:      newHub(sessions),
 	}
 }
 

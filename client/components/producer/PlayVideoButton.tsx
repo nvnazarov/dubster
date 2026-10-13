@@ -31,7 +31,7 @@ export default function PlayVideoButton() {
     [],
   );
 
-  const handleSegmentChange = useCallback(
+  const handleSegmentChanged = useCallback(
     (e: ProducerEvent["clip.segments.changed"]) => {
       if (e.segment.id === segmentRef.current?.id) {
         segmentRef.current = e.segment;
@@ -44,12 +44,12 @@ export default function PlayVideoButton() {
     events.subscribe("video.played", handleVideoPlayed);
     events.subscribe("video.stopped", handleVideoStopped);
     events.subscribe("clip.segments.selected", handleSegmentSelected);
-    events.subscribe("clip.segments.changed", handleSegmentChange);
+    events.subscribe("clip.segments.changed", handleSegmentChanged);
     return () => {
       events.unsubscribe("video.played", handleVideoPlayed);
       events.unsubscribe("video.stopped", handleVideoStopped);
       events.unsubscribe("clip.segments.selected", handleSegmentSelected);
-      events.unsubscribe("clip.segments.changed", handleSegmentChange);
+      events.unsubscribe("clip.segments.changed", handleSegmentChanged);
     };
   }, [events]);
 

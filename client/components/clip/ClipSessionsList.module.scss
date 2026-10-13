@@ -16,13 +16,18 @@
   gap: g.$sm;
 }
 
-.label {
-  user-select: none;
-  color: g.$color-surface-700;
-}
-
 .sessions {
   display: flex;
   flex-direction: column;
   gap: g.$sm;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: g.$sm;
+  border: 1px dashed g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding: g.$md;
 }

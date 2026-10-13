@@ -1,6 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import style from "./Session.module.scss";
-import { type Session } from "@/lib/models";
+import { type Session } from "@/lib/models/session";
 import { useRouter } from "next/navigation";
 
 export default function Session({ session }: { session: Session }) {
@@ -8,7 +8,7 @@ export default function Session({ session }: { session: Session }) {
 
   const openSession = useCallback(() => {
     router.push(`/sessions/${session.id}`);
-  }, []);
+  }, [session.id]);
 
   return (
     <>

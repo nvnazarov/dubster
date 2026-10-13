@@ -15,11 +15,11 @@
   overflow: hidden;
 
   &-default {
-    box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+    box-shadow: g.$color-surface-500 0px 0px 0px 1px;
     background-color: g.$color-surface-300;
 
     &:hover {
-      box-shadow: g.$color-surface-400 0px 0px 0px 2px;
+      box-shadow: g.$color-surface-500 0px 0px 0px 2px;
     }
   }
 

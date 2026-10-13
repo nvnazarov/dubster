@@ -1,5 +1,5 @@
 import { type ChangeEvent, useCallback, useState } from "react";
-import TextInput from "../shared/html/TextInput";
+import TextInput from "@/components/shared/html/TextInput";
 import { useLibrary } from "./LibraryContext";
 
 export default function TitleFilter() {

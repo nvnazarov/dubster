@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import style from "./Poster.module.scss";
-import { type Role, type Clip } from "@/lib/models";
+import { type Role, type Clip } from "@/lib/models/clip";
 import RatingBadge from "@/components/shared/misc/RatingBadge";
 import Badge from "@/components/shared/misc/Badge";
 import { type DeepReadonly } from "@/lib/util/type";
@@ -41,7 +41,7 @@ export default function Poster({ clip }: { clip: DeepReadonly<Clip> }) {
   }
 
   const roles = new Set<Role["id"]>();
-  Object.values(clip.segments).forEach((segment) => roles.add(segment.role.id));
+  Object.values(clip.segments).forEach((segment) => roles.add(segment.roleID));
   const numberOfRoles = roles.size;
   const numberOfSegments = Object.keys(clip.segments).length;
 
@@ -58,7 +58,7 @@ export default function Poster({ clip }: { clip: DeepReadonly<Clip> }) {
         <div className={style.header}>
           <div className={style.texts}>
             <div className={style.title}>{clip.title}</div>
-            <div className={style.author}>@{clip.author.name}</div>
+            <div className={style.author}>@{clip.authorID}</div>
           </div>
           <div className={style.badges}>
             <RatingBadge rating={clip.rating} />

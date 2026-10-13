@@ -8,13 +8,13 @@ export default function ClipAuthor() {
   const clip = useClip();
 
   const handleClick = useCallback(() => {
-    router.push(`/library?author=${clip.author.id}`);
-  }, [clip.author.id]);
+    router.push(`/library?author=${clip.authorID}`);
+  }, [clip.authorID]);
 
   return (
     <div className={style.container} onClick={handleClick}>
       <span className={style.at}>@</span>
-      {clip.author.name}
+      {clip.authorID}
     </div>
   );
 }

@@ -6,7 +6,6 @@ import (
 	"encoding/json/v2"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/coder/websocket"
 	"github.com/go-chi/chi/v5"
@@ -35,8 +34,8 @@ func (sr *SessionsRouter) ConnectToSession(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	defer ws.CloseNow()
-	ctx := ws.CloseRead(r.Context())
-	user := UserFromContext(r.Context())
+	ctx, cancel := context.WithCancel(r.Context())
+	user := UserFromContext(ctx)
 	sessionID := chi.URLParam(r, "sessionID")
 	conn, err := sr.service.ConnectToSession(ctx, session.ConnectToSessionParams{
 		UserID:    user.ID,
@@ -55,7 +54,8 @@ func (sr *SessionsRouter) ConnectToSession(w http.ResponseWriter, r *http.Reques
 	go func() {
 		_, events := conn.Events(ctx)
 		if err := ws.Write(ctx, websocket.MessageText, []byte("session state")); err != nil {
-			// TODO: handle error.
+			cancel()
+			return
 		}
 		for event := range events {
 			var err error
@@ -82,16 +82,15 @@ func (sr *SessionsRouter) ConnectToSession(w http.ResponseWriter, r *http.Reques
 				err = ws.Write(ctx, websocket.MessageText, []byte("rendered"))
 			}
 			if err != nil {
-				// TODO: handle error.
+				cancel()
+				return
 			}
 		}
 	}()
 	for {
-		readCtx, cancel := context.WithTimeout(ctx, 30*time.Minute)
-		_, msg, err := ws.Read(readCtx)
-		cancel()
+		_, msg, err := ws.Read(ctx)
 		if err != nil {
-			// TODO: handle error.
+			cancel()
 			return
 		}
 		var cmd struct {
@@ -99,7 +98,7 @@ func (sr *SessionsRouter) ConnectToSession(w http.ResponseWriter, r *http.Reques
 			Args    jsonv1.RawMessage `json:"args"`
 		}
 		if err := json.Unmarshal(msg, &cmd); err != nil {
-			// TODO: handle error.
+			cancel()
 			return
 		}
 		var cmderr error
@@ -138,11 +137,7 @@ func (sr *SessionsRouter) ConnectToSession(w http.ResponseWriter, r *http.Reques
 			// TODO.
 		}
 		if cmderr != nil {
-			// TODO: handle error.
-			return
-		}
-		if err := ws.Write(ctx, websocket.MessageText, []byte(msg)); err != nil {
-			// TODO: handle error.
+			cancel()
 			return
 		}
 	}

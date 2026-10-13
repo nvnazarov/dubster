@@ -1,20 +1,25 @@
 name: dubster
 
 services:
-  # client:
-  #   build:
-  #     context: "./client"
-  #     target: "runner"
-  #     # args:
-  #     #   - "NEXT_PUBLIC__BACKEND_BASE_URL=http://localhost:8080/api/v1"
-  #   ports:
-  #     - "3000:3000"
-  #   networks:
-  #     - "private"
+  client:
+    build:
+      context: "../../client"
+      target: "development"
+    environment:
+      NODE_ENV: "development"
+      NEXT_PUBLIC__BACKEND_BASE_URL: "http://localhost:8080/api"
+    volumes:
+      - "../../client:/app"
+      - "/app/node_modules"
+      - "/app/.next"
+    ports:
+      - "3000:3000"
+    networks:
+      - "private"
 
   server:
     build:
-      context: "./server"
+      context: "../../server"
       target: "production"
     environment:
       DUBSTER__SERVER__HOST: "0.0.0.0"

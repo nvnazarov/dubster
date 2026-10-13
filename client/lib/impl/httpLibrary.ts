@@ -1,50 +1,97 @@
-import { type Cursor, type Library } from "@/lib/services/library";
-import { type Clip } from "@/lib/models/clip";
-import { type DeepReadonly } from "@/lib/util/type";
+import z from "zod/v4";
+import { Filter, LibraryEvent, Cursor, Library } from "@/lib/services/library";
+import { Clip } from "@/lib/models/clip";
+import { DeepReadonly } from "@/lib/util/type";
+import { EventsQueue } from "@/lib/services/eventsQueue";
+import { clipSchema } from "@/lib/impl/httpClipsRepository";
+
+const cursorResponseSchema = z.object({
+  cursor: z.string(),
+});
+
+const searchResponseSchema = z.object({
+  advanceCursor: z.string().optional(),
+  revertCursor: z.string().optional(),
+  clips: z.array(clipSchema),
+})
 
 class HTTPCursor implements Cursor {
   private _clips: Clip[] = [];
-  private advanceCursor?: string;
-  private revertCursor?: string;
-  private unused: boolean = true;
+  private _revertCursor?: string;
+
+  constructor(private _baseURL: string, private _advanceCursor?: string) { }
 
   get clips(): DeepReadonly<Clip[]> {
     return this._clips;
   }
 
-  private async callAPI(cursor?: string) {
-    if (cursor !== undefined) {
-      fetch(`/library?cursor=${cursor}`, { method: "GET" })
-    } else {
-      fetch(`/library/cursor?title=${""}`, { method: "POST" })
+  private async call(cursor: string): Promise<DeepReadonly<Clip[]>> {
+    const cursorEncoded = encodeURIComponent(cursor);
+    const response = await fetch(`${this._baseURL}/library/search?cursor=${cursorEncoded}`, {
+      method: "GET",
+    });
+    if (response.status != 200) {
+      const text = await response.text();
+      throw `failed to get batch at cursor ${cursor}: ${response.status} ${text}`;
     }
+    const json = await response.json();
+    const parsed = searchResponseSchema.parse(json);
+    this._clips = parsed.clips;
+    this._advanceCursor = parsed.advanceCursor;
+    this._revertCursor = parsed.revertCursor;
+    return parsed.clips;
   }
 
-  canAdvance(): boolean {
-    return this.advanceCursor !== undefined || this.unused;
+  get canAdvance(): boolean {
+    return this._advanceCursor !== undefined;
   }
 
-  canRevert(): boolean {
-    return this.revertCursor !== undefined;
+  get canRevert(): boolean {
+    return this._revertCursor !== undefined;
   }
 
-  async advance(): Promise<void> {
-    this.unused = true;
-    await this.callAPI(this.advanceCursor);
+  async advance(): Promise<DeepReadonly<Clip[]>> {
+    if (!this._advanceCursor) {
+      throw "cannot advance";
+    }
+    return await this.call(this._advanceCursor);
   }
 
-  async revert(): Promise<void> {
-    this.unused = true;
-    await this.callAPI(this.revertCursor);
+  async revert(): Promise<DeepReadonly<Clip[]>> {
+    if (!this._revertCursor) {
+      throw "cannot revert";
+    }
+    return await this.call(this._revertCursor);
   }
+
+  abort() { }
+  dispose() { }
 };
 
 export default class HTTPLibrary implements Library {
-  cursor(): HTTPCursor {
-    return new HTTPCursor();
+  private _filter: Filter = {};
+
+  constructor(private baseURL: string, private eventsQueue: EventsQueue<LibraryEvent>) { };
+
+  get filter(): DeepReadonly<Filter> {
+    return this._filter;
   }
 
-  filterByTitle(title: string): void {
-    throw new Error("Method not implemented.");
+  set filter(filter: DeepReadonly<Filter>) {
+    this._filter = { ...filter };
+    this.eventsQueue.publish("filtered", { library: this });
+  }
+
+  async cursor(): Promise<HTTPCursor> {
+    const response = await fetch(`${this.baseURL}/library/cursor`, {
+      method: "GET",
+    });
+    if (response.status != 200) {
+      const text = await response.text();
+      throw `failed to create cursor: ${response.status} ${text}`;
+    }
+    const json = await response.json();
+    const parsed = cursorResponseSchema.parse(json);
+    return new HTTPCursor(this.baseURL, parsed.cursor);
   }
 }

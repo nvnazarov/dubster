@@ -1,16 +1,16 @@
-import partyIcon from "@/public/icons/party.png";
+import playIcon from "@/public/icons/play.png";
 import Button from "@/components/shared/html/Button";
 import {
   useClip,
-  useSessionRepository,
+  useSessionsRepository,
   useEventsQueue,
 } from "@/components/clip/ClipContext";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function PlayPartyButton() {
+export default function PlaySoloButton() {
   const clip = useClip();
-  const sessions = useSessionRepository();
+  const sessions = useSessionsRepository();
   const eventsQueue = useEventsQueue();
   const [progress, setProgress] = useState<number | undefined>(undefined);
   const router = useRouter();
@@ -18,8 +18,8 @@ export default function PlayPartyButton() {
   const handleClick = useCallback(async () => {
     try {
       setProgress(0);
-      const session = await sessions.party(clip);
-      router.push(`/sessions/party/${session.id}`);
+      const session = await sessions.create(clip.id);
+      router.push(`/sessions/${session.id}`);
     } catch (e) {
       eventsQueue.publish("session.start.error", { error: e });
     } finally {
@@ -29,8 +29,8 @@ export default function PlayPartyButton() {
 
   return (
     <Button
-      text="Play Party"
-      icon={partyIcon.src}
+      text="Play"
+      icon={playIcon.src}
       progress={progress}
       onClick={progress === undefined ? handleClick : undefined}
       primary

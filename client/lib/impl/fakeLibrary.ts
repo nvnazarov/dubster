@@ -1,9 +1,8 @@
-import { Filter, type Cursor, type Library } from "@/lib/services/library";
-import { type Clip } from "@/lib/models";
+import { Filter, LibraryEvent, type Cursor, type Library } from "@/lib/services/library";
+import { type Clip } from "@/lib/models/clip";
 import { type EventsQueue } from "@/lib/services/eventsQueue";
 import { type DeepReadonly } from "@/lib/util/type";
-import { deepcopy } from "@/lib/util/copy";
-import { sleep } from "@/lib/util/async";
+import { Duration, sleep } from "@/lib/util/time";
 
 class FakeCursor implements Cursor {
   private count = 0;
@@ -44,15 +43,14 @@ class FakeCursor implements Cursor {
       const id = this.count + i;
       this._clips.push({
         id: id.toString(),
-        author: {
-          id: "0",
-          name: "fakeuser",
-        },
+        authorID: "fake-author",
         title: this.title === "" ? "Clip Title" : `${this.title}...`,
         description: "Clip description.",
         segments: {},
+        roles: {},
         verified: true,
         dateCreated: new Date(),
+        dateVerified: new Date(),
         rating: ((id ** 5 + 37) % 500 + 1) / 100,
       });
     }
@@ -64,7 +62,7 @@ class FakeCursor implements Cursor {
       if (!this.canAdvance) {
         return;
       }
-      await sleep(1000);
+      await sleep(new Duration(1500));
       this.updateClips();
     });
     await this.queue;
@@ -76,7 +74,7 @@ class FakeCursor implements Cursor {
       if (!this.canRevert) {
         return;
       }
-      await sleep(1000);
+      await sleep(new Duration(1500));
       this.count = Math.max(0, this.count - this._clips.length - this.pageSize);
       this.updateClips();
     });
@@ -99,19 +97,18 @@ class FakeCursor implements Cursor {
 export default class FakeLibrary implements Library {
   private _filter: Filter = {};
 
-  constructor(private eventsQueue: EventsQueue) { };
+  constructor(private eventsQueue: EventsQueue<LibraryEvent>) { };
 
   get filter(): DeepReadonly<Filter> {
     return this._filter;
   }
 
-  set filter(f: DeepReadonly<Filter>) {
-    this._filter = { ...f };
-    this.eventsQueue.publish("library.filter", { library: this });
+  set filter(filter: DeepReadonly<Filter>) {
+    this._filter = { ...filter };
+    this.eventsQueue.publish("filtered", { library: this });
   }
 
-  cursor(): FakeCursor {
-    const filter = deepcopy(this._filter);
-    return new FakeCursor(filter);
+  async cursor(): Promise<FakeCursor> {
+    return new FakeCursor({ ...this._filter });
   }
 };

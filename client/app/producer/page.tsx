@@ -5,19 +5,20 @@ import { useRef } from "react";
 import style from "./page.module.scss";
 import Header from "@/components/shared/misc/Header";
 import { ProducerContext } from "@/components/producer/ProducerContext";
-import { Producer } from "@/lib/services/producer";
 import SyncEventsQueue from "@/lib/impl/syncEventsQueue";
 import ProducerVideo from "@/components/producer/ProducerVideo";
 import ProducerPlayVideoButton from "@/components/producer/PlayVideoButton";
 import { ProducerTimeline } from "@/components/producer/ProducerTimeline";
-import ProducerRolesList from "@/components/producer/ProducerRolesList";
-import CyclicalColorProvider from "@/lib/impl/cyclicalColorProvider";
+import ProducerRolesList from "@/components/producer/RolesList";
 import ProducerSelectedSegmentInfo from "@/components/producer/ProducerSelectedSegmentInfo";
+import SyncCommandBus from "@/lib/impl/syncCommandBus";
+import { ProducerCommand, ProducerEvent } from "@/lib/services/producer";
+import CyclicalColorProvider from "@/lib/impl/cyclicalColorProvider";
 
 export default function ProducerPage() {
-  const eventsQueueRef = useRef(new SyncEventsQueue());
-  const producerRef = useRef(new Producer(eventsQueueRef.current));
-  const colorProvider = useRef(
+  const eventsQueueRef = useRef(new SyncEventsQueue<ProducerEvent>());
+  const commandBusRef = useRef(new SyncCommandBus<ProducerCommand>());
+  const colorProviderRef = useRef(
     new CyclicalColorProvider(["#bbe83e", "#28dee8", "#d71ebc"]),
   );
   return (
@@ -25,9 +26,9 @@ export default function ProducerPage() {
       <Header />
       <ProducerContext
         value={{
-          producer: producerRef.current,
           eventsQueue: eventsQueueRef.current,
-          colorProvider: colorProvider.current,
+          commandBus: commandBusRef.current,
+          colorProvider: colorProviderRef.current,
         }}
       >
         <div className={style.outer}>

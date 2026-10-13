@@ -104,6 +104,7 @@ type session struct {
 	renderConsumer   event.Consumer[string]
 	gradeConsumer    event.Consumer[string]
 	mu               *sync.Mutex
+	cond             *sync.Cond
 }
 
 type phase int
@@ -115,14 +116,17 @@ const (
 	phaseFinilizing
 )
 
-func newSession(s Session, c clip.Clip) *session {
-	return &session{
+func newSession(s Session, sessions Repository, c clip.Clip) *session {
+	session := &session{
+		sessions:    sessions,
 		session:     s,
 		clip:        c,
 		connections: map[string]*Connection{},
 		phase:       phaseLobby,
 		mu:          &sync.Mutex{},
 	}
+	session.finalizeIfAllParticipantsDone()
+	return session
 }
 
 // emit emits an event. emit is not concurrent safe.
@@ -196,6 +200,7 @@ func (s *session) kick(kickerID string, subjectID string) error {
 	if _, ok := s.session.Participants[subjectID]; !ok {
 		return nil
 	}
+	delete(s.doneParticipants, subjectID)
 	delete(s.session.Participants, subjectID)
 	if s.phase == phaseRolePicking {
 		for roleID, actorID := range s.session.Actors {
@@ -206,6 +211,7 @@ func (s *session) kick(kickerID string, subjectID string) error {
 	}
 	s.unsub(subjectID)
 	s.emit(EventUserKicked{UserID: subjectID})
+	s.cond.Signal()
 	return nil
 }
 
@@ -217,6 +223,9 @@ func (s *session) switchToRolePicking(userID string) error {
 	}
 	if s.phase != phaseLobby {
 		return ErrState
+	}
+	if err := s.sessions.Save(context.TODO(), s.session); err != nil {
+		return err
 	}
 	s.phase = phaseRolePicking
 	s.emit(EventRolePickingState{})
@@ -243,6 +252,9 @@ func (s *session) switchToSegmentsVoicing(userID string) error {
 		if !hasRoles {
 			return ErrParticipantWithoutRoles
 		}
+	}
+	if err := s.sessions.Save(context.TODO(), s.session); err != nil {
+		return err
 	}
 	s.phase = phaseSegmentsVoicing
 	s.emit(EventSegmentsVoicingState{})
@@ -307,12 +319,7 @@ func (s *session) done(userID string) error {
 	}
 	s.doneParticipants[userID] = struct{}{}
 	s.emit(EventUserDone{UserID: userID})
-	if len(s.doneParticipants) == len(s.session.Participants) {
-		s.phase = phaseFinilizing
-		// TODO: handle dispatching errors.
-		_ = s.gradeDispatcher.Dispatch(context.Background(), s.session.ID)
-		_ = s.renderDispatcher.Dispatch(context.Background(), s.session.ID)
-	}
+	s.cond.Signal()
 	return nil
 }
 
@@ -327,20 +334,40 @@ func (s *session) unsub(userID string) {
 	close(ch)
 }
 
-type hub struct {
-	sessions map[string]*session
-	mu       *sync.Mutex
+func (s *session) finalizeIfAllParticipantsDone() {
+	go func() {
+		s.cond.L.Lock()
+		defer s.cond.L.Unlock()
+		for s.phase != phaseSegmentsVoicing && len(s.doneParticipants) != len(s.session.Participants) {
+			s.cond.Wait()
+		}
+		if len(s.doneParticipants) == len(s.session.Participants) {
+			s.phase = phaseFinilizing
+			s.emit(EventFinalizingState{})
+			// TODO: handle errors.
+			_ = s.sessions.Save(context.TODO(), s.session)
+			_ = s.gradeDispatcher.Dispatch(context.TODO(), s.session.ID)
+			_ = s.renderDispatcher.Dispatch(context.TODO(), s.session.ID)
+		}
+	}()
 }
 
-func newHub() *hub {
+type hub struct {
+	sessions       Repository
+	activeSessions map[string]*session
+	mu             *sync.Mutex
+}
+
+func newHub(sessions Repository) *hub {
 	return &hub{
-		sessions: map[string]*session{},
-		mu:       &sync.Mutex{},
+		sessions:       sessions,
+		activeSessions: map[string]*session{},
+		mu:             &sync.Mutex{},
 	}
 }
 
 func (h *hub) connect(p ConnectToSessionParams) (*Connection, error) {
-	s, ok := h.sessions[p.SessionID]
+	s, ok := h.activeSessions[p.SessionID]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -350,5 +377,5 @@ func (h *hub) connect(p ConnectToSessionParams) (*Connection, error) {
 func (h *hub) create(s Session, c clip.Clip) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.sessions[s.ID] = newSession(s, c)
+	h.activeSessions[s.ID] = newSession(s, h.sessions, c)
 }

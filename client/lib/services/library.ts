@@ -6,19 +6,19 @@ import { DeepReadonly } from "@/lib/util/type";
  * It provides access to clips in a sequential manner.
  */
 export interface Cursor {
-  get clips(): Clip[];
+  get clips(): DeepReadonly<Clip[]>;
   get canAdvance(): boolean;
   get canRevert(): boolean;
   /**
    * `advance` moves the cursor to the next clips batch.
    * Concurrent calls are queued together with calls to `revert`.
    */
-  advance(): Promise<Clip[]>;
+  advance(): Promise<DeepReadonly<Clip[]>>;
   /**
    * `revert` moves the cursor back to the previous clips batch.
    * Concurrent calls are queued together with calls to `advance`.
    */
-  revert(): Promise<Clip[]>;
+  revert(): Promise<DeepReadonly<Clip[]>>;
   abort(): void;
   dispose(): void;
 };
@@ -35,7 +35,7 @@ export interface Filter {
  */
 export interface Library {
   filter: DeepReadonly<Filter>;
-  cursor(): Cursor;
+  cursor(): Promise<Cursor>;
 };
 
 export interface LibraryEvent {

@@ -27,4 +27,5 @@ export interface Clip {
   roles: Record<Role["id"], Role>;
   verified: boolean;
   dateCreated: Date;
+  dateVerified: Date;
 };

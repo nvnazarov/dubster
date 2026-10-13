@@ -30,6 +30,8 @@ type EventRolePickingState struct{}
 
 type EventSegmentsVoicingState struct{}
 
+type EventFinalizingState struct{}
+
 type EventGraded struct {
 	Grades map[string]float64
 }
