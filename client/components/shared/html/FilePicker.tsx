@@ -1,5 +1,5 @@
 import style from "./FilePicker.module.scss";
-import { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, useId } from "react";
 
 export type FilePickerAttributes = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -7,5 +7,11 @@ export type FilePickerAttributes = Omit<
 >;
 
 export default function FilePicker({ ...props }: FilePickerAttributes) {
-  return <input type="file" className={style.container} {...props} />;
+  const id = useId();
+  return (
+    <>
+      <label htmlFor={id} className={style.label}>Open Video</label>
+      <input id={id} type="file" className={style.input} {...props} />
+    </>
+  );
 }

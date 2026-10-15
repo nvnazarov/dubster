@@ -2,7 +2,7 @@
 import style from "./SoloSession.module.scss";
 import { SessionContext } from "./context";
 import PagesList from "./PagesList";
-import { SoloSession } from "@/lib/services/soloSession";
+import { SoloSession } from "@/lib/services/session";
 import AudioRecordButton from "./AudioRecordButton";
 import { useEffect, useState } from "react";
 import FakeSoloSession from "@/lib/impl/fakeSoloSession";

@@ -1,13 +1,30 @@
 @use "../../../style/global.scss" as g;
 
-.container {
+.label {
+  cursor: pointer;
   user-select: none;
+  display: flex;
+  gap: g.$sm;
+  align-items: center;
   border-radius: 100vmax;
   padding: g.$sm g.$md;
   border: none;
   color: g.$color-surface-1000;
   font-weight: 400;
   font-size: g.$font-size-md;
-  box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+  transition-duration: 0.2s;
+  overflow: hidden;
+  outline: none;
+  box-shadow: g.$color-surface-500 0px 0px 0px 1px;
   background-color: g.$color-surface-300;
+
+  &:hover {
+    box-shadow: g.$color-surface-500 0px 0px 0px 2px;
+  }
+}
+
+.input {
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
 }

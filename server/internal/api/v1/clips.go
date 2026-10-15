@@ -84,7 +84,7 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		ClipID      string                  `json:"id"`
 		Title       string                  `json:"title"`
-		Description string                  `json:"description"`
+		Description string                  `json:"description,omitempty"`
 		Segments    map[string]clip.Segment `json:"segments"`
 		Roles       map[string]clip.Role    `json:"roles"`
 	}
@@ -118,6 +118,7 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	if err := json.MarshalWrite(w, c, jsonv1.FormatDurationAsNano(true)); err != nil {
 		cr.logger.Error("create clip: failed to return response", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -167,7 +168,7 @@ func (cr *ClipsRouter) VerifyClip(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (cr *ClipsRouter) GetClipDownloadURL(w http.ResponseWriter, r *http.Request) {

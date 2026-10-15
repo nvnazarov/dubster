@@ -1,4 +1,4 @@
-import { type EventsQueue } from "@/lib/services/eventsQueue";
+import EventsQueue from "@/lib/services/eventsQueue";
 
 export default class SyncEventsQueue<Event> implements EventsQueue<Event> {
   private callbacks = new Map<keyof Event, Set<(e: any) => void>>();

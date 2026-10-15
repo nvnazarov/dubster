@@ -33,7 +33,9 @@
   gap: g.$md;
 }
 
-.timeline {
+.actions {
+  display: flex;
+  gap: g.$md;
 }
 
 .controls {

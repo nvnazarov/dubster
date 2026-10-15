@@ -1,9 +1,10 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import playIcon from "@/public/icons/play.png";
 import pauseIcon from "@/public/icons/pause.png";
 import Button from "@/components/shared/html/Button";
-import { useCommandBus, useEventsQueue } from "./ProducerContext";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ProducerEvent } from "@/lib/services/producer";
+import Event from "@/components/producer/events";
+import { useCommandBus, useEventsQueue } from "@/components/producer/context";
 import { DeepReadonly } from "@/lib/util/type";
 import { Segment } from "@/lib/models/clip";
 
@@ -17,39 +18,30 @@ export default function PlayVideoButton() {
     setPlaying(true);
   }, []);
 
-  const handleVideoStopped = useCallback(
-    (e: ProducerEvent["video.stopped"]) => {
-      setPlaying(false);
-    },
-    [],
-  );
+  const handleVideoStopped = useCallback(() => {
+    setPlaying(false);
+  }, []);
 
-  const handleSegmentSelected = useCallback(
-    (e: ProducerEvent["clip.segments.selected"]) => {
+  const handleSegmentSelected = useCallback((e: Event["segment.selected"]) => {
+    segmentRef.current = e.segment;
+  }, []);
+
+  const handleSegmentChanged = useCallback((e: Event["segment.changed"]) => {
+    if (e.segment.id === segmentRef.current?.id) {
       segmentRef.current = e.segment;
-    },
-    [],
-  );
-
-  const handleSegmentChanged = useCallback(
-    (e: ProducerEvent["clip.segments.changed"]) => {
-      if (e.segment.id === segmentRef.current?.id) {
-        segmentRef.current = e.segment;
-      }
-    },
-    [],
-  );
+    }
+  }, []);
 
   useEffect(() => {
     events.subscribe("video.played", handleVideoPlayed);
     events.subscribe("video.stopped", handleVideoStopped);
-    events.subscribe("clip.segments.selected", handleSegmentSelected);
-    events.subscribe("clip.segments.changed", handleSegmentChanged);
+    events.subscribe("segment.selected", handleSegmentSelected);
+    events.subscribe("segment.changed", handleSegmentChanged);
     return () => {
       events.unsubscribe("video.played", handleVideoPlayed);
       events.unsubscribe("video.stopped", handleVideoStopped);
-      events.unsubscribe("clip.segments.selected", handleSegmentSelected);
-      events.unsubscribe("clip.segments.changed", handleSegmentChanged);
+      events.unsubscribe("segment.selected", handleSegmentSelected);
+      events.unsubscribe("segment.changed", handleSegmentChanged);
     };
   }, [events]);
 

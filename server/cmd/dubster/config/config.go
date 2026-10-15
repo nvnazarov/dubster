@@ -20,6 +20,11 @@ type Config struct {
 type Server struct {
 	Host string `env:"HOST,default=127.0.0.1"`
 	Port string `env:"PORT,default=8080"`
+	CORS CORS   `env:",prefix=CORS__"`
+}
+
+type CORS struct {
+	AllowedOrigins []string `env:"ALLOWED_ORIGINS,default=*"`
 }
 
 type Clip struct {

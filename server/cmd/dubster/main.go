@@ -169,7 +169,8 @@ func main() {
 	}
 
 	// Setup and run HTTP API.
-	err = api.ListenAndServe(config.Server.Address(), api.Routers{
+	err = api.ListenAndServe(api.Options{
+		Address: config.Server.Address(),
 		Library: api.NewLibraryRouter(library.New(postgresClipRepository)),
 		Clips: api.NewClipsRouter(api.ClipsRouterDependencies{
 			CRUD: clip.NewCRUD(clip.CRUDOptions{
@@ -195,7 +196,9 @@ func main() {
 			postgresClipRepository,
 			s3RendersBucket,
 		)),
-	}, logger)
+		CORSAllowedOrigins: config.Server.CORS.AllowedOrigins,
+		Logger:             logger,
+	})
 	if err != http.ErrServerClosed {
 		logger.Error("server crashed", slog.Any("error", err))
 		os.Exit(1)

@@ -1,0 +1,21 @@
+@use "../../style/global.scss" as g;
+
+.segment {
+  display: flex;
+  gap: g.$md;
+  background-color: g.$color-surface-0;
+  border: 1px solid g.$color-surface-400;
+  border-radius: g.$radius-md;
+  padding: g.$sm;
+  align-items: center;
+  color: g.$color-surface-900;
+  font-size: g.$font-size-md;
+}
+
+.empty {
+  border: 1px dashed g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding: g.$sm;
+  text-align: center;
+  color: g.$color-surface-600;
+}

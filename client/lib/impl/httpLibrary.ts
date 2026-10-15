@@ -2,7 +2,7 @@ import z from "zod/v4";
 import { Filter, LibraryEvent, Cursor, Library } from "@/lib/services/library";
 import { Clip } from "@/lib/models/clip";
 import { DeepReadonly } from "@/lib/util/type";
-import { EventsQueue } from "@/lib/services/eventsQueue";
+import EventsQueue from "@/lib/services/eventsQueue";
 import { clipSchema } from "@/lib/impl/httpClipsRepository";
 
 const cursorResponseSchema = z.object({
@@ -27,7 +27,7 @@ class HTTPCursor implements Cursor {
 
   private async call(cursor: string): Promise<DeepReadonly<Clip[]>> {
     const cursorEncoded = encodeURIComponent(cursor);
-    const response = await fetch(`${this._baseURL}/library/search?cursor=${cursorEncoded}`, {
+    const response = await fetch(`${this._baseURL}/v1/library/search?cursor=${cursorEncoded}`, {
       method: "GET",
     });
     if (response.status != 200) {
@@ -83,7 +83,7 @@ export default class HTTPLibrary implements Library {
   }
 
   async cursor(): Promise<HTTPCursor> {
-    const response = await fetch(`${this.baseURL}/library/cursor`, {
+    const response = await fetch(`${this.baseURL}/v1/library/cursor`, {
       method: "GET",
     });
     if (response.status != 200) {

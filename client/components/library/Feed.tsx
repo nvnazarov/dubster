@@ -12,6 +12,8 @@ import { type Cursor } from "@/lib/services/library";
 import { type Clip } from "@/lib/models/clip";
 import { DeepReadonly } from "@/lib/util/type";
 import ColumnarLayout from "@/lib/impl/columnarLayout";
+import { debounce } from "@/lib/services/debounce";
+import { Duration } from "@/lib/util/time";
 
 export default function Feed() {
   const library = useLibrary();
@@ -22,16 +24,22 @@ export default function Feed() {
   const [canAdvance, setCanAdvance] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
 
-  const refresh = useCallback(async () => {
-    if (cursorRef.current) {
-      cursorRef.current.dispose();
-    }
-    cursorRef.current = await library.cursor();
-    layoutRef.current.clear();
-    setClips([]);
-    setCanAdvance(true);
-    setIsAdvancing(false);
-  }, []);
+  const refresh = useCallback(
+    debounce(
+      async () => {
+        if (cursorRef.current) {
+          cursorRef.current.dispose();
+        }
+        cursorRef.current = await library.cursor();
+        layoutRef.current.clear();
+        setClips([]);
+        setCanAdvance(true);
+        setIsAdvancing(false);
+      },
+      { delay: new Duration(1500), skipFirst: true },
+    ),
+    [],
+  );
 
   useEffect(() => {
     refresh();
@@ -65,20 +73,12 @@ export default function Feed() {
     [isAdvancing, canAdvance],
   );
 
-  const handleLibraryFiltered = useCallback(
-    (e: LibraryEvent["filtered"]) => {
-      // TODO: implement debounce logic (react if filter is unchanged for some time).
-      refresh();
-    },
-    [refresh],
-  );
-
   useEffect(() => {
-    eventsQueue.subscribe("filtered", handleLibraryFiltered);
+    eventsQueue.subscribe("filtered", refresh);
     return () => {
-      eventsQueue.unsubscribe("filtered", handleLibraryFiltered);
+      eventsQueue.unsubscribe("filtered", refresh);
     };
-  }, [handleLibraryFiltered, eventsQueue]);
+  }, [refresh, eventsQueue]);
 
   useEffect(() => {
     if (!cursorRef.current) {

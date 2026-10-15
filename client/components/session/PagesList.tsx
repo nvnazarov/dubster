@@ -5,7 +5,7 @@ import { useSession } from "./context";
 import {
   type Page,
   type SoloSessionKeyEventMap,
-} from "@/lib/services/soloSession";
+} from "@/lib/services/session";
 
 function PageTab({ page, active }: { page: Page; active: boolean }) {
   const session = useSession();

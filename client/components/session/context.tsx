@@ -1,4 +1,4 @@
-import { type SoloSession } from "@/lib/services/soloSession";
+import { type SoloSession } from "@/lib/services/session";
 import { createContext, useContext } from "react";
 
 export interface SessionContext {

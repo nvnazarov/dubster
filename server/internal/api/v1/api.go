@@ -6,23 +6,32 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 )
 
-type Routers struct {
-	Library  LibraryRouter
-	Clips    ClipsRouter
-	Sessions SessionsRouter
+type Options struct {
+	Address            string
+	Library            LibraryRouter
+	Clips              ClipsRouter
+	Sessions           SessionsRouter
+	CORSAllowedOrigins []string
+	Logger             *slog.Logger
 }
 
-func ListenAndServe(address string, routers Routers, logger *slog.Logger) error {
+func ListenAndServe(o Options) error {
 	r := chi.NewRouter()
-	r.With(Log(logger)).Route("/api/v1", func(r chi.Router) {
-		r.Mount("/library", routers.Library)
-		r.Mount("/clips", routers.Clips)
-		r.Mount("/sessions", routers.Sessions)
+	r.Use(cors.Handler(cors.Options{
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedOrigins:   o.CORSAllowedOrigins,
+	}))
+	r.With(Log(o.Logger)).Route("/api/v1", func(r chi.Router) {
+		r.Mount("/library", o.Library)
+		r.Mount("/clips", o.Clips)
+		r.Mount("/sessions", o.Sessions)
 	})
 	s := http.Server{
-		Addr:    address,
+		Addr:    o.Address,
 		Handler: r,
 	}
 	return s.ListenAndServe()

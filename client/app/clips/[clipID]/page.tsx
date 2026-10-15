@@ -1,7 +1,7 @@
 "use client";
 import { useRef } from "react";
 
-import style from "./page.module.scss";
+import style from "@/app/clips/[clipID]/page.module.scss";
 import Header from "@/components/shared/misc/Header";
 import ClipTitle from "@/components/clip/ClipTitle";
 import ClipDescription from "@/components/clip/ClipDescription";
@@ -11,14 +11,13 @@ import ClipVideo from "@/components/clip/ClipVideo";
 import ClipRolesList from "@/components/clip/ClipRolesList";
 import ClipNumberOfRolesBadge from "@/components/clip/ClipNumberOfRolesBadge";
 import ClipNumberOfSegmentsBadge from "@/components/clip/ClipNumberOfSegmentsBadge";
-import SyncEventsQueue from "@/lib/impl/syncEventsQueue";
-
-import { Duration } from "@/lib/util/time";
-import HTTPSessionsRepository from "@/lib/impl/httpSessionsRepository";
-import { type Clip } from "@/lib/models/clip";
 import ClipRatingBadge from "@/components/clip/ClipRatingBadge";
 import ClipSessionsList from "@/components/clip/ClipSessionsList";
 import ClipAuthor from "@/components/clip/ClipAuthor";
+import SyncEventsQueue from "@/lib/impl/syncEventsQueue";
+import { Duration } from "@/lib/util/time";
+import HTTPSessionsRepository from "@/lib/impl/httpSessionsRepository";
+import { type Clip } from "@/lib/models/clip";
 import { config } from "@/lib/config";
 
 export default function ClipPage() {

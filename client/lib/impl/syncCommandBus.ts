@@ -1,4 +1,4 @@
-import { CommandBus } from "@/lib/services/commandBus";
+import CommandBus from "@/lib/services/commandBus";
 
 export default class SyncCommandBus<Command> implements CommandBus<Command> {
   private handlers = new Map<keyof Command, (e: any) => any>();
@@ -13,5 +13,11 @@ export default class SyncCommandBus<Command> implements CommandBus<Command> {
 
   handle<T extends keyof Command>(key: T, handler: (params: Command[T]) => void | Promise<void>): void {
     this.handlers.set(key, handler);
+  }
+
+  unhandle<T extends keyof Command>(key: T, handler: (params: Command[T]) => void | Promise<void>): void {
+    if (this.handlers.get(key) == handler) {
+      this.handlers.delete(key)
+    }
   }
 }

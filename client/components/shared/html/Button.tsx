@@ -29,7 +29,7 @@ export default function Button({
       ) : (
         icon !== undefined && <img src={icon} />
       )}
-      {text}
+      <span>{text}</span>
       {progress !== undefined && (
         <div className={style.progress} style={{ width: `${progress}%` }} />
       )}

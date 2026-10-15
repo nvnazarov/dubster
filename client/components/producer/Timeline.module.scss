@@ -1,0 +1,30 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: g.$xs;
+}
+
+.segments {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  background-color: g.$color-surface-200;
+  border: 1px solid g.$color-surface-400;
+  border-top-left-radius: g.$radius-xs;
+  border-top-right-radius: g.$radius-xs;
+  border-bottom-left-radius: g.$radius-md;
+  border-bottom-right-radius: g.$radius-md;
+}
+
+.scroll {
+  width: 100%;
+  height: 15px;
+  background-color: g.$color-surface-100;
+  border: 1px solid g.$color-surface-400;
+  border-top-left-radius: g.$radius-md;
+  border-top-right-radius: g.$radius-md;
+  border-bottom-left-radius: g.$radius-xs;
+  border-bottom-right-radius: g.$radius-xs;
+}

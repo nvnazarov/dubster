@@ -1,5 +1,5 @@
 import z from "zod/v4";
-import { ClipsRepository } from "@/lib/services/clipsRepository";
+import ClipsRepository, { CreateOptions } from "@/lib/services/clipsRepository";
 import { Clip } from "@/lib/models/clip";
 import { Duration } from "@/lib/util/time";
 
@@ -29,7 +29,7 @@ export const clipSchema = z.object({
 export default class HTTPClipsRepostory implements ClipsRepository {
   constructor(private baseURL: string) { }
 
-  async create(clip: Clip): Promise<void> {
+  async create(clip: CreateOptions): Promise<Clip> {
     const response = await fetch(`${this.baseURL}/v1/clips`, {
       method: "POST",
       body: JSON.stringify(clip),
@@ -38,6 +38,8 @@ export default class HTTPClipsRepostory implements ClipsRepository {
       const text = await response.text()
       throw `failed to create clip: ${response.status} ${text}`;
     }
+    const json = await response.json();
+    return clipSchema.parse(json);
   }
 
   async find(clipID: Clip["id"]): Promise<Clip | null> {
