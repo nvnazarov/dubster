@@ -5,23 +5,20 @@ import style from "@/app/library/page.module.scss";
 import Header from "@/components/shared/misc/Header";
 import TitleFilter from "@/components/library/TitleFilter";
 import Feed from "@/components/library/Feed";
-import LibraryContext from "@/components/library/LibraryContext";
-import SyncEventsQueue from "@/lib/impl/syncEventsQueue";
+import LibraryContext from "@/components/library/context";
 import HTTPLibrary from "@/lib/impl/httpLibrary";
-import { config } from "@/lib/config";
+import config from "@/lib/config";
+import { state } from "@/lib/state";
 
 export default function LibraryPage() {
-  const eventsQueueRef = useRef(new SyncEventsQueue());
-  const libraryRef = useRef(
-    new HTTPLibrary(config.backendBaseURL, eventsQueueRef.current),
-  );
+  const library = useRef(new HTTPLibrary(config.backendBaseURL)).current;
   return (
     <div className={style.page}>
       <Header />
       <LibraryContext
         value={{
-          library: libraryRef.current,
-          eventsQueue: eventsQueueRef.current,
+          library,
+          filter: state({}),
         }}
       >
         <div className={style.container}>

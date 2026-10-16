@@ -1,5 +1,5 @@
 import { Clip } from "@/lib/models/clip";
-import { DeepReadonly } from "@/lib/util/type";
+import { DeepReadonly } from "@/lib/type";
 
 /**
  * `Cursor` abstracts the way the library is accessed.
@@ -19,7 +19,6 @@ export interface Cursor {
    * Concurrent calls are queued together with calls to `advance`.
    */
   revert(): Promise<DeepReadonly<Clip[]>>;
-  abort(): void;
   dispose(): void;
 };
 
@@ -33,13 +32,6 @@ export interface Filter {
 /**
  * `Library` abstracts the clips library.
  */
-export interface Library {
-  filter: DeepReadonly<Filter>;
-  cursor(): Promise<Cursor>;
+export default interface Library {
+  cursor(filter: DeepReadonly<Filter>): Promise<Cursor>;
 };
-
-export interface LibraryEvent {
-  "filtered": {
-    library: Library;
-  },
-}

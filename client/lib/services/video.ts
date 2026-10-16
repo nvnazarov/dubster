@@ -1,4 +1,4 @@
-import { Duration } from "@/lib/util/time";
+import { Duration } from "@/lib/time";
 
 export default interface Video {
   get duration(): Duration;

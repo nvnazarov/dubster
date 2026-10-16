@@ -1,4 +1,4 @@
-import { Duration } from "@/lib/util/time";
+import { Duration } from "@/lib/time";
 
 export function debounce<T extends (...args: any) => void>(f: T, options: {
   delay: Duration;

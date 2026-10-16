@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Duration } from "@/lib/util/time";
+import { Duration } from "@/lib/time";
 
 describe("Duration", () => {
   it("initializes to zero", () => {
@@ -13,5 +13,9 @@ describe("Duration", () => {
   it("returns seconds", () => {
     const d = new Duration(1234);
     expect(d.seconds).toBeCloseTo(1.234, 3);
+  });
+  it("returns nanoseconds", () => {
+    const d = new Duration(1234);
+    expect(d.seconds).toBe(1234000);
   });
 });

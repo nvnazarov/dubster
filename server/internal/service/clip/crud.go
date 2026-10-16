@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"time"
+	"uuid"
 )
 
 type InvalidParams error
@@ -45,7 +46,6 @@ func NewCRUD(o CRUDOptions) *CRUD {
 }
 
 type CreateParams struct {
-	ClipID      string
 	UserID      string
 	Title       string
 	Description string
@@ -55,7 +55,7 @@ type CreateParams struct {
 
 func (c *CRUD) Create(ctx context.Context, p CreateParams) (Clip, error) {
 	clip := Clip{
-		ID:          p.ClipID,
+		ID:          uuid.New().String(),
 		AuthorID:    p.UserID,
 		Title:       p.Title,
 		Description: p.Description,

@@ -1,9 +1,9 @@
 import { ChangeEvent, useCallback } from "react";
 import FilePicker from "@/components/shared/html/FilePicker";
-import { useCommandBus } from "@/components/producer/context";
+import { useProducerState } from "./context";
 
 export default function VideoPicker() {
-  const commands = useCommandBus();
+  const state = useProducerState();
 
   const handleVideoPick = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
@@ -11,9 +11,9 @@ export default function VideoPicker() {
       if (!files || files.length != 1) {
         return;
       }
-      await commands.execute("video.open", { file: files[0]! });
+      state.videoFile.value = files[0]!;
     },
-    [commands],
+    [state],
   );
 
   return <FilePicker onChange={handleVideoPick} />;

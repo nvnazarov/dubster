@@ -124,6 +124,7 @@ func newSession(s Session, sessions Repository, c clip.Clip) *session {
 		connections: map[string]*Connection{},
 		phase:       phaseLobby,
 		mu:          &sync.Mutex{},
+		cond:        sync.NewCond(&sync.Mutex{}),
 	}
 	session.finalizeIfAllParticipantsDone()
 	return session

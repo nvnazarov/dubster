@@ -1,7 +1,8 @@
 import z from "zod/v4";
+
 import ClipsRepository, { CreateOptions } from "@/lib/services/clipsRepository";
 import { Clip } from "@/lib/models/clip";
-import { Duration } from "@/lib/util/time";
+import { Duration } from "@/lib/time";
 
 export const clipSchema = z.object({
   id: z.string(),
@@ -22,8 +23,8 @@ export const clipSchema = z.object({
     sex: z.literal(["male", "female"]).optional(),
   })),
   verified: z.boolean(),
-  dateCreated: z.date(),
-  dateVerified: z.date(),
+  dateCreated: z.string().transform(s => new Date(s)),
+  dateVerified: z.string().transform(s => new Date(s)),
 });
 
 export default class HTTPClipsRepostory implements ClipsRepository {

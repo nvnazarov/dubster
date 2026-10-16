@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
-import style from "./ClipSessionsList.module.scss";
 import refreshIcon from "@/public/icons/refresh.png";
-import { useClip, useSessionsRepository } from "./ClipContext";
-import { type Session } from "@/lib/models/session";
+import style from "@/components/clip/SessionsList.module.scss";
+import { useClipContext } from "@/components/clip/context";
+import { Session } from "@/lib/models/session";
 import SessionView from "@/components/clip/Session";
 import Spinner from "@/components/shared/misc/Spinner";
 import Button from "@/components/shared/html/Button";
 
-export default function ClipSessionsList() {
-  const clip = useClip();
-  const sessions = useSessionsRepository();
+export default function SessionsList() {
+  const { clip, sessions } = useClipContext();
   const [clipSessions, setClipSessions] = useState<Session[]>([]);
   const [pending, setPending] = useState(true);
   const [error, setError] = useState<any>(null);
@@ -38,7 +37,7 @@ export default function ClipSessionsList() {
 
   return (
     <div className={style.container}>
-      {error != null ? (
+      {error !== null ? (
         <div className={style.error}>
           <Button
             text="Refresh Sessions"

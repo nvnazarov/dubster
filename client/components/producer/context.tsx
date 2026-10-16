@@ -1,41 +1,32 @@
 import { createContext, useContext } from "react";
 
-import Command from "@/components/producer/commands";
-import Event from "@/components/producer/events";
-import CommandBus from "@/lib/services/commandBus";
-import EventsQueue from "@/lib/services/eventsQueue";
+import { Entities, State } from "@/lib/state";
 import ColorProvider from "@/lib/services/colorProvider";
+import ClipsRepository from "@/lib/services/clipsRepository";
+import { Role, Segment } from "@/lib/models/clip";
+import ClipVerifier from "@/lib/services/clipVerifier";
+import Video from "@/lib/services/video";
 
-export interface Context {
-  eventsQueue?: EventsQueue<Event>;
-  commandBus?: CommandBus<Command>;
-  colorProvider?: ColorProvider;
+export interface ProducerContext {
+  producer: State<{
+    video: Video | null;
+    selectedSegmentID: string | null;
+    clip: State<{
+      title: string;
+      description: string;
+      roles: Entities<Role>;
+      segments: Entities<State<Segment>>;
+    }>;
+  }>;
+  colorProvider: ColorProvider;
+  clips: ClipsRepository;
+  verifier: ClipVerifier;
 }
 
-export const context = createContext<Context>({});
+export const context = createContext<ProducerContext>({} as any);
 
-export function useEventsQueue(): EventsQueue<Event> {
-  const ctx = useContext(context);
-  if (ctx.eventsQueue === undefined) {
-    throw "closest ProducerContext does not provide EventsQueue";
-  }
-  return ctx.eventsQueue;
-}
-
-export function useCommandBus(): CommandBus<Command> {
-  const ctx = useContext(context);
-  if (ctx.commandBus === undefined) {
-    throw "closest ProducerContext does not provide CommandBus";
-  }
-  return ctx.commandBus;
-}
-
-export function useColorProvider(): ColorProvider {
-  const ctx = useContext(context);
-  if (ctx.colorProvider === undefined) {
-    throw "closest ProducerContext does not provide ColorProvider";
-  }
-  return ctx.colorProvider;
+export function useProducerContext() {
+  return useContext(context);
 }
 
 export default context;

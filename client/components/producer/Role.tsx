@@ -1,16 +1,26 @@
-import { ChangeEvent, useCallback } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import style from "@/components/producer/Role.module.scss";
-import { useColorProvider, useCommandBus } from "@/components/producer/context";
 import TextInput from "@/components/shared/html/TextInput";
 import Select from "@/components/shared/html/Select";
 import Button from "@/components/shared/html/Button";
 import { type Role } from "@/lib/models/clip";
-import { DeepReadonly } from "@/lib/util/type";
+import { useProducerState } from "./context";
 
-export default function Role({ role }: { role: DeepReadonly<Role> }) {
-  const colorProvider = useColorProvider();
-  const commands = useCommandBus();
+export default function Role({ roleID }: { roleID: string }) {
+  const state = useProducerState();
+  const [role, setRole] = useState<Role>({ id: "", name: "" });
+
+  useEffect(() => {
+    const role = state.roles[roleID];
+    if (!role) {
+      throw `role ${roleID} does not exist`;
+    }
+    const sub = role.subscribe(setRole);
+    return () => {
+      sub.cancel();
+    };
+  }, [state, roleID]);
 
   const changeName = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -21,7 +31,7 @@ export default function Role({ role }: { role: DeepReadonly<Role> }) {
   );
 
   const removeRole = useCallback(() => {
-    commands.execute("role.delete", { roleID: role.id });
+    state.roles.delete(role.id);
   }, [role.id]);
 
   const changeSex = useCallback(
@@ -39,7 +49,7 @@ export default function Role({ role }: { role: DeepReadonly<Role> }) {
         default:
           throw `invalid sex value: ${sex}`;
       }
-      commands.execute("role.change", { role: changed });
+      
     },
     [role],
   );

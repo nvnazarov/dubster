@@ -1,7 +1,10 @@
-import type { Metadata } from "next";
+"use client";
 import { Geist, Geist_Mono } from "next/font/google";
 import React from "react";
-import "./global.css";
+
+import "@/app/global.css";
+import AuthContext from "@/components/shared/auth/context";
+import { state } from "@/lib/state";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,10 +16,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Dubster",
-  description: "Challenge your voice in action!",
-};
+// export const metadata: Metadata = {
+//   title: "Dubster",
+//   description: "Challenge your voice in action!",
+// };
 
 export default function RootLayout({
   children,
@@ -25,7 +28,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <AuthContext value={state({ userID: null })}>
+        <body>{children}</body>
+      </AuthContext>
     </html>
   );
 }

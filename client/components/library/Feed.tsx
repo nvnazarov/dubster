@@ -1,23 +1,20 @@
 import { UIEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import style from "./Feed.module.scss";
-import {
-  useEventsQueue,
-  useLibrary,
-} from "@/components/library/LibraryContext";
+import { useLibraryContext } from "@/components/library/context";
 import Poster from "@/components/library/Poster";
 import Spinner from "@/components/shared/misc/Spinner";
-import { type LibraryEvent } from "@/lib/services/library";
-import { type Cursor } from "@/lib/services/library";
-import { type Clip } from "@/lib/models/clip";
-import { DeepReadonly } from "@/lib/util/type";
+import { Cursor } from "@/lib/services/library";
+import { Clip } from "@/lib/models/clip";
+import { DeepReadonly } from "@/lib/type";
 import ColumnarLayout from "@/lib/impl/columnarLayout";
-import { debounce } from "@/lib/services/debounce";
-import { Duration } from "@/lib/util/time";
+import { debounce } from "@/lib/debounce";
+import { Duration } from "@/lib/time";
+import { use } from "@/lib/state";
 
 export default function Feed() {
-  const library = useLibrary();
-  const eventsQueue = useEventsQueue();
+  const { library, filter: filterState } = useLibraryContext();
+  const filter = use(filterState);
   const cursorRef = useRef<Cursor>(undefined);
   const layoutRef = useRef(new ColumnarLayout());
   const [clips, setClips] = useState<DeepReadonly<Clip>[]>([]);
@@ -30,7 +27,7 @@ export default function Feed() {
         if (cursorRef.current) {
           cursorRef.current.dispose();
         }
-        cursorRef.current = await library.cursor();
+        cursorRef.current = await library.cursor(filter);
         layoutRef.current.clear();
         setClips([]);
         setCanAdvance(true);
@@ -38,7 +35,7 @@ export default function Feed() {
       },
       { delay: new Duration(1500), skipFirst: true },
     ),
-    [],
+    [library, filter],
   );
 
   useEffect(() => {
@@ -72,13 +69,6 @@ export default function Feed() {
     },
     [isAdvancing, canAdvance],
   );
-
-  useEffect(() => {
-    eventsQueue.subscribe("filtered", refresh);
-    return () => {
-      eventsQueue.unsubscribe("filtered", refresh);
-    };
-  }, [refresh, eventsQueue]);
 
   useEffect(() => {
     if (!cursorRef.current) {
@@ -124,7 +114,7 @@ export default function Feed() {
           ))}
         </div>
         <div className={style.info}>
-          {canAdvance ? (
+          {isAdvancing ? (
             <Spinner />
           ) : clips.length === 0 ? (
             "No clips were found"

@@ -1,8 +1,7 @@
-import { Filter, LibraryEvent, type Cursor, type Library } from "@/lib/services/library";
-import { type Clip } from "@/lib/models/clip";
-import { type EventsQueue } from "@/lib/services/eventsQueue";
-import { type DeepReadonly } from "@/lib/util/type";
-import { Duration, sleep } from "@/lib/util/time";
+import Library, { Filter, Cursor } from "@/lib/services/library";
+import { Clip } from "@/lib/models/clip";
+import { DeepReadonly } from "@/lib/type";
+import { Duration, sleep } from "@/lib/time";
 
 class FakeCursor implements Cursor {
   private count = 0;
@@ -95,20 +94,7 @@ class FakeCursor implements Cursor {
 }
 
 export default class FakeLibrary implements Library {
-  private _filter: Filter = {};
-
-  constructor(private eventsQueue: EventsQueue<LibraryEvent>) { };
-
-  get filter(): DeepReadonly<Filter> {
-    return this._filter;
-  }
-
-  set filter(filter: DeepReadonly<Filter>) {
-    this._filter = { ...filter };
-    this.eventsQueue.publish("filtered", { library: this });
-  }
-
-  async cursor(): Promise<FakeCursor> {
-    return new FakeCursor({ ...this._filter });
+  async cursor(filter: DeepReadonly<Filter>): Promise<FakeCursor> {
+    return new FakeCursor({ ...filter });
   }
 };

@@ -11,8 +11,8 @@ import { CSSProperties } from "react";
 export default interface ColorProvider {
   /**
    * `color` returns the color that corresponds to
-   * the provided identificator.
-   * @param id The identificatior. 
+   * the provided identifier.
+   * @param id The identifier. 
    */
   color(id: string): CSSProperties["color"];
 };

@@ -1,5 +1,5 @@
-import { Video } from "@/lib/services/video";
-import { Duration } from "../util/time";
+import Video from "@/lib/services/video";
+import { Duration } from "@/lib/time";
 
 export default class HTMLVideo implements Video {
   constructor(private _html: HTMLVideoElement) { }

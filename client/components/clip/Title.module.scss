@@ -1,6 +1,9 @@
 @use "../../style/global.scss" as g;
 
 .container {
+  display: flex;
+  align-items: center;
+  gap: g.$md;
   max-width: 400px;
   color: g.$color-surface-1000;
   font-size: g.$font-size-xl;

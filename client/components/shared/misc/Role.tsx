@@ -3,7 +3,7 @@ import timeIcon from "@/public/icons/time.png";
 import segmentIcon from "@/public/icons/maker.png";
 import Badge from "./Badge";
 import { type Role } from "@/lib/models/clip";
-import { Duration } from "@/lib/util/time";
+import { Duration } from "@/lib/time";
 
 export function Role({
   role,

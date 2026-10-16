@@ -1,4 +1,4 @@
-import { Session } from "@/lib/services/session";
+import Session from "@/lib/services/session";
 import { Session as SessionType } from "@/lib/models/session";
 import { Role } from "@/lib/models/clip";
 import { User } from "@/lib/models/user";

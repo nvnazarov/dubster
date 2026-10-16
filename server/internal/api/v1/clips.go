@@ -82,7 +82,6 @@ func (cr *ClipsRouter) DeleteClip(w http.ResponseWriter, r *http.Request) {
 
 func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		ClipID      string                  `json:"id"`
 		Title       string                  `json:"title"`
 		Description string                  `json:"description,omitempty"`
 		Segments    map[string]clip.Segment `json:"segments"`
@@ -104,7 +103,6 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 	user := UserFromContext(r.Context())
 	c, err := cr.crud.Create(r.Context(), clip.CreateParams{
 		UserID:      user.ID,
-		ClipID:      body.ClipID,
 		Title:       body.Title,
 		Description: body.Description,
 		Segments:    body.Segments,

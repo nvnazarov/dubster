@@ -19,6 +19,7 @@ import Producer from "@/lib/services/producer";
 import HTTPClipsRepostory from "@/lib/impl/httpClipsRepository";
 import { config } from "@/lib/config";
 import SelectedSegment from "@/components/producer/SelectedSegment";
+import DoneButton from "@/components/producer/DoneButton";
 
 export default function ProducerPage() {
   const ref = useRef({
@@ -76,6 +77,7 @@ export default function ProducerPage() {
               <div className={style.actions}>
                 <VideoPicker />
                 <PlayVideoButton />
+                <DoneButton />
               </div>
             </div>
             <div className={style.right}>

@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/url"
 	"time"
 	"uuid"
@@ -21,14 +22,16 @@ type Service struct {
 	sessions Repository
 	renders  blob.Downloader
 	hub      *hub
+	logger   *slog.Logger
 }
 
-func NewService(sessions Repository, clips clip.Repository, renders blob.Downloader) *Service {
+func NewService(sessions Repository, clips clip.Repository, renders blob.Downloader, logger *slog.Logger) *Service {
 	return &Service{
 		clips:    clips,
 		sessions: sessions,
 		renders:  renders,
 		hub:      newHub(sessions),
+		logger:   logger,
 	}
 }
 
@@ -40,11 +43,12 @@ type CreateSessionParams struct {
 func (s *Service) CreateSession(ctx context.Context, p CreateSessionParams) (Session, error) {
 	clip, err := s.clips.Get(ctx, p.ClipID)
 	if err != nil {
+		s.logger.Error("session service: get clip: error", slog.Any("error", err))
 		return Session{}, err
 	}
-	if !clip.Verified {
-		return Session{}, ErrClipNotVerified
-	}
+	// if !clip.Verified {
+	// 	return Session{}, ErrClipNotVerified
+	// }
 	session := Session{
 		ID:           uuid.New().String(),
 		HostID:       p.HostID,
@@ -57,6 +61,7 @@ func (s *Service) CreateSession(ctx context.Context, p CreateSessionParams) (Ses
 		DateCreated:  time.Now(),
 	}
 	if err := s.sessions.Save(ctx, session); err != nil {
+		s.logger.Error("session service: save session: error", slog.Any("error", err))
 		return session, err
 	}
 	s.hub.create(session, clip)

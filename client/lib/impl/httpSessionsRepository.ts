@@ -1,7 +1,8 @@
-import { SessionsRepository } from "@/lib/services/sessionsRepository";
+import z from "zod/v4";
+
+import SessionsRepository from "@/lib/services/sessionsRepository";
 import { Clip } from "@/lib/models/clip";
 import { Session } from "@/lib/models/session";
-import z from "zod/v4";
 
 const sessionSchema = z.object({
   id: z.string(),
@@ -12,14 +13,16 @@ const sessionSchema = z.object({
   grades: z.record(z.string(), z.number()),
   rendered: z.boolean(),
   finished: z.boolean(),
-  dateCreated: z.date(),
-  dateStarted: z.date(),
-  dateFinished: z.date(),
-  dateGraded: z.date(),
-  dateRendered: z.date(),
+  dateCreated: z.string().transform(s => new Date(s)),
+  dateStarted: z.string().transform(s => new Date(s)),
+  dateFinished: z.string().transform(s => new Date(s)),
+  dateGraded: z.string().transform(s => new Date(s)),
+  dateRendered: z.string().transform(s => new Date(s)),
 });
 
-const sessionsArraySchema = z.array(sessionSchema);
+const mySessionsSchema = z.object({
+  sessions: z.array(sessionSchema),
+})
 
 export default class HTTPSessionsRepository implements SessionsRepository {
   constructor(private baseURL: string) { }
@@ -45,6 +48,6 @@ export default class HTTPSessionsRepository implements SessionsRepository {
       throw `failed to get my sessions: ${response.status} ${text}`;
     }
     const json = await response.json();
-    return sessionsArraySchema.parse(json);
+    return mySessionsSchema.parse(json).sessions;
   }
 }

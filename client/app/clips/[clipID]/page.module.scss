@@ -58,3 +58,8 @@
   flex-direction: column;
   gap: g.$xs;
 }
+
+.authoractions {
+  display: flex;
+  gap: g.$md;
+}

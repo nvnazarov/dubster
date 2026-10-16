@@ -1,11 +1,11 @@
-import { type Role as RoleType } from "@/lib/models/clip";
-import { useClip } from "./ClipContext";
-import style from "./ClipRolesList.module.scss";
+import style from "@/components/clip/RolesList.module.scss";
+import { useClipContext } from "@/components/clip/context";
 import { Role } from "@/components/shared/misc/Role";
-import { Duration } from "@/lib/util/time";
+import { type Role as RoleType } from "@/lib/models/clip";
+import { Duration } from "@/lib/time";
 
 export default function ClipRolesList() {
-  const clip = useClip();
+  const { clip } = useClipContext();
   const roles = Object.values(clip.roles);
 
   function countSegments(roleID: RoleType["id"]): number {
@@ -26,7 +26,7 @@ export default function ClipRolesList() {
   }
 
   if (roles.length === 0) {
-    throw "roles list: bad clip: no roles in the clip";
+    throw "bad clip: no roles in clip";
   }
 
   return (

@@ -1,7 +1,7 @@
 import { User } from "@/lib/models/user";
 import { Role } from "@/lib/models/clip";
 
-export interface Session {
+export default interface Session {
   switchToRolePicking(): Promise<void>;
   switchToSegmentsVoicing(): Promise<void>;
   done(): Promise<void>;

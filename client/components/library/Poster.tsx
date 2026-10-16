@@ -1,13 +1,13 @@
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import style from "./Poster.module.scss";
-import { type Role, type Clip } from "@/lib/models/clip";
-import RatingBadge from "@/components/shared/misc/RatingBadge";
-import Badge from "@/components/shared/misc/Badge";
-import { type DeepReadonly } from "@/lib/util/type";
 import roleIcon from "@/public/icons/role.png";
 import segmentIcon from "@/public/icons/maker.png";
+import style from "@/components/library/Poster.module.scss";
+import RatingBadge from "@/components/shared/misc/RatingBadge";
+import Badge from "@/components/shared/misc/Badge";
+import { DeepReadonly } from "@/lib/type";
+import { Role, Clip } from "@/lib/models/clip";
 
 export default function Poster({ clip }: { clip: DeepReadonly<Clip> }) {
   const router = useRouter();

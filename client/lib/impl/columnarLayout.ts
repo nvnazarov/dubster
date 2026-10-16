@@ -1,6 +1,6 @@
 import { type Clip } from "@/lib/models/clip";
 import { type Location, type Layout } from "@/lib/services/layout";
-import { type DeepReadonly } from "@/lib/util/type";
+import { type DeepReadonly } from "@/lib/type";
 
 export default class ColumnarLayout implements Layout {
   private items: Location[] = [];

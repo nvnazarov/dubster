@@ -1,5 +1,6 @@
-import style from "./TextInput.module.scss";
 import { InputHTMLAttributes } from "react";
+
+import style from "@/components/shared/html/TextInput.module.scss";
 
 export type TextInputAttributes = Omit<
   InputHTMLAttributes<HTMLInputElement>,

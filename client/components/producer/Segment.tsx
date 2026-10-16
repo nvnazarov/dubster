@@ -1,71 +1,45 @@
-import { MouseEvent, useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 import style from "@/components/producer/Segment.module.scss";
-import {
-  useColorProvider,
-  useCommandBus,
-  useEventsQueue,
-} from "@/components/producer/context";
-import Event from "@/components/producer/events";
+import { useProducerContext } from "@/components/producer/context";
 import { type Segment } from "@/lib/models/clip";
-import { DeepReadonly } from "@/lib/util/type";
-import Video from "@/lib/services/video";
+import { use, useField } from "@/lib/state";
 
-export default function Segment({
-  segment,
-  video,
-}: {
-  segment: DeepReadonly<Segment>;
-  video: Video;
-}) {
-  const commands = useCommandBus();
-  const events = useEventsQueue();
-  const colorProvider = useColorProvider();
-  const [selected, setSelected] = useState(false);
+export default function Segment({ segmentID }: { segmentID: string }) {
+  const { colorProvider, producer } = useProducerContext();
+  const video = useField(producer, "video");
+  const selectedSegmentID = useField(producer, "selectedSegmentID");
+  const segment = use(producer.clip.segments.get(segmentID));
 
-  const handleSegmentSelected = useCallback(
-    (e: Event["segment.selected"]) => {
-      setSelected(e.segment.id === segment.id);
-    },
-    [segment.id],
-  );
+  if (!video) {
+    throw "video not open";
+  }
 
-  useEffect(() => {
-    events.subscribe("segment.selected", handleSegmentSelected);
-    return () => {
-      events.unsubscribe("segment.selected", handleSegmentSelected);
-    };
-  }, [events]);
+  const selectThisSegment = useCallback(() => {
+    producer.selectedSegmentID = segmentID;
+  }, [segmentID]);
 
-  const handleClick = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
-      commands.execute("segment.select", { segmentID: segment.id });
-      commands.execute("video.seek", { at: segment.begin });
-    },
-    [commands, segment.id],
-  );
+  const hasRole = Boolean(segment.roleID);
+  const isSegmentInvalid = segment.line === "" || segment.roleID;
+  const isSelected = segmentID === selectedSegmentID;
 
-  const duration = segment.end.milliseconds - segment.begin.milliseconds;
-  const width = (duration / video.duration.milliseconds) * 100 + "%";
-  const left =
-    (segment.begin.milliseconds / video.duration.milliseconds) * 100 + "%";
-  console.log(segment.roleID);
-  const roleColor = segment.roleID
-    ? colorProvider.color(segment.roleID)
-    : "grey";
-  const borderColor =
-    segment.line === "" || segment.roleID === "" ? "red" : "transparent";
+  const segmentDuration = segment.end.milliseconds - segment.begin.milliseconds;
+  const roleColor = hasRole ? colorProvider.color(segment.roleID) : "grey";
+  const width = (segmentDuration / video.duration.milliseconds) * 100 + "%";
+  const left = (segment.begin.seconds / video.duration.seconds) * 100 + "%";
+  const borderColor = isSegmentInvalid ? "red" : "transparent";
+
   return (
     <div
       className={style.container}
-      onClick={handleClick}
+      onClick={selectThisSegment}
       style={{
         left,
         width,
         backgroundColor: roleColor,
         borderColor: borderColor,
-        opacity: selected ? 0.9 : 0.2,
-        pointerEvents: selected ? "none" : "all",
+        opacity: isSelected ? 0.9 : 0.2,
+        pointerEvents: isSelected ? "none" : "all",
       }}
     ></div>
   );

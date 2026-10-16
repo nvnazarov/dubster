@@ -1,5 +1,6 @@
-import style from "./Select.module.scss";
 import { SelectHTMLAttributes } from "react";
+
+import style from "@/components/shared/html/Select.module.scss";
 
 export type SelectAttributes = Omit<
   SelectHTMLAttributes<HTMLSelectElement>,

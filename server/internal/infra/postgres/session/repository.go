@@ -19,7 +19,62 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) ByParticipant(ctx context.Context, userID string) ([]session.Session, error) {
-	return nil, nil
+	const sql = `
+	SELECT
+		id,
+		host_id,
+		clip_id,
+		participants,
+		actors,
+		grades,
+		finished,
+		rendered,
+		date_created,
+		date_started,
+		date_finished,
+		date_rendered,
+		date_graded
+	FROM sessions
+	WHERE
+		participants::jsonb ? $1`
+	rows, err := r.pool.Query(ctx, sql, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var sessions []session.Session
+	for rows.Next() {
+		var s session.Session
+		var participantsJSON, actorsJSON, gradesJSON []byte
+		err := rows.Scan(
+			&s.ID,
+			&s.HostID,
+			&s.ClipID,
+			&participantsJSON,
+			&actorsJSON,
+			&gradesJSON,
+			&s.Finished,
+			&s.Rendered,
+			&s.DateCreated,
+			&s.DateStarted,
+			&s.DateFinished,
+			&s.DateRendered,
+			&s.DateGraded)
+		if err != nil {
+			return sessions, err
+		}
+		if err := json.Unmarshal(participantsJSON, &s.Participants); err != nil {
+			return sessions, err
+		}
+		if err := json.Unmarshal(actorsJSON, &s.Actors); err != nil {
+			return sessions, err
+		}
+		if err := json.Unmarshal(gradesJSON, &s.Grades); err != nil {
+			return sessions, err
+		}
+		sessions = append(sessions, s)
+	}
+	return sessions, nil
 }
 
 func (r *Repository) Save(ctx context.Context, s session.Session) error {

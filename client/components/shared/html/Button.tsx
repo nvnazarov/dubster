@@ -1,5 +1,6 @@
-import style from "./Button.module.scss";
 import { ButtonHTMLAttributes } from "react";
+
+import style from "@/components/shared/html/Button.module.scss";
 
 export type ButtonAttributes = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,

@@ -35,7 +35,7 @@ func (q *Queue) ensure(key Key) {
 	defer q.mu.Unlock()
 	if _, ok := q.queues[key]; !ok {
 		q.logger.Debug("command queue: creating queue for key", slog.String("key", string(key)))
-		q.queues[key] = &queue{commands: make(chan any, bufferSize)}
+		q.queues[key] = &queue{commands: make(chan any, bufferSize), key: key}
 	}
 }
 

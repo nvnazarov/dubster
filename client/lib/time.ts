@@ -1,4 +1,4 @@
-import { deepIgnorer, DeepIgnorer } from "@/lib/util/type";
+import { deepIgnorer, DeepIgnorer } from "@/lib/type";
 
 /**
  * `Duration` is an immutable type that represents the duration of a process.
@@ -7,6 +7,10 @@ export class Duration implements DeepIgnorer {
   readonly [deepIgnorer] = true;
 
   constructor(readonly milliseconds: number = 0) { }
+
+  get nanoseconds(): number {
+    return this.milliseconds * 1000;
+  }
 
   get seconds(): number {
     return this.milliseconds / 1000;
@@ -22,6 +26,10 @@ export class Duration implements DeepIgnorer {
     const minutes = Math.floor(this.milliseconds / 60000);
     const seconds = Math.round((this.milliseconds - minutes * 60000) / 1000);
     return minutes + "m" + seconds + "s";
+  }
+
+  toJSON() {
+    return this.nanoseconds;
   }
 };
 

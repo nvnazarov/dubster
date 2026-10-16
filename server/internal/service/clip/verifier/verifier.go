@@ -107,7 +107,8 @@ func (r *Verifier) handle(ctx context.Context, cmd command.Command[string]) {
 			// TODO: log error.
 			return
 		}
-		clip.Verified = (err == nil)
+		r.logger.Info("verifier: clip verification verdict", slog.Any("error", err))
+		clip.Verified = false
 	}
 	clip.DateVerified = time.Now()
 	if err := r.clips.Save(ctx, clip); err != nil {

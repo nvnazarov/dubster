@@ -195,6 +195,7 @@ func main() {
 			postgresSessionRepository,
 			postgresClipRepository,
 			s3RendersBucket,
+			logger,
 		)),
 		CORSAllowedOrigins: config.Server.CORS.AllowedOrigins,
 		Logger:             logger,

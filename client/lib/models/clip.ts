@@ -1,5 +1,5 @@
 import { User } from "@/lib/models/user";
-import { Duration } from "@/lib/util/time";
+import { Duration } from "@/lib/time";
 
 export type Sex = "male" | "female";
 
