@@ -36,6 +36,10 @@ func Authenticate(next http.Handler) http.Handler {
 func Log(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Debug("received request",
+				slog.String("method", r.Method),
+				slog.String("uri", r.RequestURI),
+			)
 			next.ServeHTTP(w, r)
 			logger.Debug("handled request",
 				slog.String("method", r.Method),

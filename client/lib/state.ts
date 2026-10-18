@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 
-import { DeepReadonly } from "@/lib/type";
-
 type Callback = (value: any) => void;
 
 const subscribers = new Map<string, Set<Callback>>();
 
 const markState: unique symbol = Symbol();
 
-function copy<T>(object: T): T {
-  // TODO: implement shallow copying.
-  return object;
+export function isState(value: unknown): boolean {
+  if (typeof value === "object") {
+    if (value === null || value === undefined) {
+      return false;
+    }
+    return Object.hasOwn(value as object, markState);
+  }
+  return false;
 }
 
 function subscribe(key: string, callback: Callback): Subscription {
@@ -23,7 +26,7 @@ function subscribe(key: string, callback: Callback): Subscription {
   return new subscription(key, callback);
 }
 
-function unsubscribe<T>(key: string, callback: (value: T) => void): void {
+function unsubscribe(key: string, callback: Callback): void {
   const subs = subscribers.get(key);
   if (subs) {
     subs.delete(callback);
@@ -62,7 +65,7 @@ export class Subscriptions {
   };
 };
 
-function notifySubscribersComputed<T>(key: string, computeValue: () => T) {
+function notifySubscribersComputed(key: string, computeValue: () => any) {
   const callbacks = subscribers.get(key);
   if (!callbacks || callbacks.size === 0) {
     return;
@@ -77,39 +80,55 @@ export function unsubscribeAll(): void {
   subscribers.clear();
 }
 
-type NonStateFields<T> = {
-  [F in keyof T as T[F] extends State<infer _R> ? never : F]: T[F];
-};
+type Snapshot<T> = T extends State<infer S> ? S : T;
 
-/**
- * State is an object which fields notify subscribers
- * when they change. When multiple fields in a state
- * are changing simultaneously, a React component can
- * react to all of them at once by delaying the
- * processing until the next render (changes to the
- * component's state are queued).
- */
-export type State<T extends object> = T & {
+export interface State<T> {
   [markState]: true;
-  subscribe<F extends keyof NonStateFields<T>>(field: F, callback: (value: T[F]) => void): Subscription;
   subscribe(callback: (value: T) => void): Subscription;
+  snapshot(): T;
+}
+
+type NonStateObjectProperties<T> = {
+  [F in keyof T as T[F] extends State<any> ? never : F]: T[F];
 };
 
-export function state<T extends object>(value: T): State<T> {
+export interface ObjectPropertySubscriber<T extends object> {
+  subscribe<F extends keyof NonStateObjectProperties<T>>(field: F, callback: (value: Snapshot<T[F]>) => void): Subscription;
+}
+
+type ObjectSnapshot<T extends object> = { [F in keyof T]: Snapshot<T[F]> };
+
+export type StateObject<T extends object> = T & ObjectPropertySubscriber<T> & State<ObjectSnapshot<T>>;
+
+export function makeState<T extends object>(object: T): StateObject<T> {
   const stateKey = crypto.randomUUID();
   const state = new Proxy({
-    ...value,
+    ...object,
     [markState]: true,
-    subscribe<F extends keyof NonStateFields<T>>(...args: [F, (value: T[F]) => void] | [(value: T) => void]) {
+    subscribe<F extends keyof NonStateObjectProperties<T>>(...args: [F, (value: T[F]) => void] | [(value: T) => void]) {
       if (args.length === 2) {
         const fieldKey = `${stateKey}:${args[0].toString()}`;
         return subscribe(fieldKey, args[1]);
       }
       return subscribe(stateKey, args[0]);
+    },
+    snapshot(): ObjectSnapshot<T> {
+      const result: any = {}
+      for (const [property, value] of Object.entries(this)) {
+        if (isState(value)) {
+          result[property] = (value as State<typeof value>).snapshot();
+        } else {
+          result[property] = value;
+        }
+      }
+      return result;
     }
   }, {
     set(target: any, field: any, value: any): boolean {
-      if (field === "subscribe" || field === markState) {
+      if (field === "subscribe" || field === "snapshot" || field === markState) {
+        return false;
+      }
+      if (isState(target[field])) {
         return false;
       }
       if (Object.is(target[field], value)) {
@@ -118,22 +137,30 @@ export function state<T extends object>(value: T): State<T> {
       target[field] = value;
       const fieldKey = `${stateKey}:${field.toString()}`;
       notifySubscribers(fieldKey, value);
-      notifySubscribers(stateKey, copy(target));
+      notifySubscribers(stateKey, target.snapshot());
       return true;
     }
   });
-  return state as State<T>;
+  for (const [_, value] of Object.entries(object)) {
+    if (isState(value)) {
+      const _ = (value as State<any>).subscribe((_) => {
+        notifySubscribers(stateKey, state.snapshot());
+      });
+    }
+  }
+  return state as StateObject<T>;
 }
 
-export class Entities<T> {
+export class Entities<T> implements State<ReadonlyArray<Snapshot<T>>> {
   readonly [markState] = true;
   private key = crypto.randomUUID();
   private _entities: Record<string, T> = {};
+  private _subs: Record<string, Subscription> = {};
 
   constructor(private id: (entity: T) => string) { }
 
-  get entities(): DeepReadonly<Record<string, T>> {
-    return this._entities as any;
+  get size(): number {
+    return Object.keys(this._entities).length;
   }
 
   add(entity: T): void {
@@ -143,7 +170,10 @@ export class Entities<T> {
       throw `entity ${id} already exists`;
     }
     this._entities[id] = entity;
-    notifySubscribersComputed<T[]>(this.key, () => Object.values(this._entities) as T[]);
+    if (isState(entity)) {
+      this._subs[id] = (entity as State<any>).subscribe((_) => notifySubscribers(this.key, this.snapshot()));
+    }
+    notifySubscribers(this.key, this.snapshot());
   };
 
   delete(id: string): void {
@@ -152,7 +182,9 @@ export class Entities<T> {
       throw `entity ${id} not found`;
     }
     delete this._entities[id];
-    notifySubscribersComputed(this.key, () => Object.values(this._entities) as T[]);
+    this._subs[id]?.cancel();
+    delete this._subs[id];
+    notifySubscribers(this.key, this.snapshot());
   };
 
   get(id: string): T {
@@ -163,25 +195,45 @@ export class Entities<T> {
     return entity;
   }
 
-  subscribe(callback: (value: DeepReadonly<T[]>) => void): Subscription {
+  snapshot(): ReadonlyArray<Snapshot<T>> {
+    return Object.values(this._entities).map((entity) => snapshot(entity));
+  }
+
+  subscribe(callback: (value: ReadonlyArray<Snapshot<T>>) => void): Subscription {
     return subscribe(this.key, callback);
+  }
+
+  *[Symbol.iterator](): Generator<T> {
+    for (const entity of Object.values(this._entities)) {
+      yield entity;
+    }
   }
 }
 
-export function useField<T extends object, F extends keyof NonStateFields<T>>(state: State<T>, field: F): T[F] {
-  const [value, setValue] = useState<T[F]>(state[field]);
+function snapshot<T>(v: T): Snapshot<T> {
+  if (isState(v)) {
+    return (v as State<Snapshot<T>>).snapshot();
+  }
+  return v as any;
+}
+
+export function useObjectProperty<T extends object, F extends keyof NonStateObjectProperties<T>>
+  (object: StateObject<T>, property: F): Snapshot<T[F]> {
+  const [value, setValue] = useState<Snapshot<T[F]>>(snapshot(object[property]));
   useEffect(() => {
-    const sub = state.subscribe(field, setValue);
+    setValue(snapshot(object[property]));
+    const sub = object.subscribe(property, setValue);
     return () => {
       sub.cancel();
     };
-  }, [state]);
+  }, [object]);
   return value;
 }
 
-export function use<T extends object>(state: State<T>): T {
-  const [value, setValue] = useState<T>(state);
+export function useSnapshot<T>(state: State<T>): T {
+  const [value, setValue] = useState(state.snapshot());
   useEffect(() => {
+    setValue(state.snapshot());
     const sub = state.subscribe(setValue);
     return () => {
       sub.cancel();

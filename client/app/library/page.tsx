@@ -8,7 +8,7 @@ import Feed from "@/components/library/Feed";
 import LibraryContext from "@/components/library/context";
 import HTTPLibrary from "@/lib/impl/httpLibrary";
 import config from "@/lib/config";
-import { state } from "@/lib/state";
+import { makeState } from "@/lib/state";
 
 export default function LibraryPage() {
   const library = useRef(new HTTPLibrary(config.backendBaseURL)).current;
@@ -18,7 +18,7 @@ export default function LibraryPage() {
       <LibraryContext
         value={{
           library,
-          filter: state({}),
+          filter: makeState({}),
         }}
       >
         <div className={style.container}>

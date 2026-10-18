@@ -1,7 +1,78 @@
 @use "../../style/global.scss" as g;
 
-.container {
+.list {
   display: flex;
   flex-direction: column;
   gap: g.$sm;
+  overflow-y: scroll;
+  &::-webkit-scrollbar {
+    width: 0px;
+  }
+}
+
+.role {
+  display: flex;
+  gap: g.$sm;
+  align-items: center;
+  border: 1px solid g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding: g.$sm;
+
+  &__name {
+    color: g.$color-surface-900;
+    outline: none;
+    background-color: transparent;
+    border: none;
+    padding: g.$sm;
+    font-size: g.$font-size-md;
+    transition-duration: 0.2s;
+    text-overflow: ellipsis;
+
+    &:focus {
+      border-color: g.$color-surface-primary-400;
+    }
+  }
+
+  &__sex {
+    color: g.$color-surface-900;
+    outline: none;
+    background-color: transparent;
+    border: 1px dashed g.$color-surface-400;
+    border-radius: g.$radius-sm;
+    padding: g.$sm;
+    font-size: g.$font-size-md;
+    text-overflow: ellipsis;
+    transition-duration: 0.2s;
+
+    &:focus {
+      border-color: g.$color-surface-primary-400;
+    }
+
+    &__placeholder {
+      color: g.$color-surface-700;
+    }
+  }
+
+  &__delete {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    outline: none;
+    border: none;
+    background-color: transparent;
+    border-radius: 50%;
+    transition-duration: 0.2s;
+    padding: g.$sm;
+    width: g.$lg;
+    height: g.$lg;
+
+    &:hover {
+      background-color: g.$color-surface-200;
+    }
+
+    img {
+      filter: invert(100%);
+      width: g.$sm;
+    }
+  }
 }

@@ -1,9 +1,12 @@
 import { ChangeEvent, useCallback } from "react";
+
 import FilePicker from "@/components/shared/html/FilePicker";
-import { useProducerState } from "./context";
+import { useProducerContext } from "@/components/producer/context";
+import { useObjectProperty } from "@/lib/state";
 
 export default function VideoPicker() {
-  const state = useProducerState();
+  const { video } = useProducerContext();
+  const file = useObjectProperty(video, "file");
 
   const handleVideoPick = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
@@ -11,10 +14,16 @@ export default function VideoPicker() {
       if (!files || files.length != 1) {
         return;
       }
-      state.videoFile.value = files[0]!;
+      video.file = files[0]!;
     },
-    [state],
+    [video],
   );
 
-  return <FilePicker onChange={handleVideoPick} />;
+  const isVideoOpen = file !== null;
+  return (
+    <FilePicker
+      onChange={handleVideoPick}
+      text={isVideoOpen ? "Open another video" : "Open video"}
+    />
+  );
 }

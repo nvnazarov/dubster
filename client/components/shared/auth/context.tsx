@@ -1,16 +1,12 @@
 "use client";
-import { State, state } from "@/lib/state";
+import { StateObject } from "@/lib/state";
 import { createContext, useContext } from "react";
 
-export type AuthContext = State<{
+export type AuthContext = StateObject<{
   userID: string | null;
 }>;
 
-const context = createContext<AuthContext>(
-  state({
-    userID: null,
-  }),
-);
+const context = createContext<AuthContext>({} as any);
 
 export function useAuthContext() {
   return useContext(context);

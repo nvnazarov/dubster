@@ -182,6 +182,14 @@ func (cr *ClipsRouter) GetClipDownloadURL(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
-	w.WriteHeader(http.StatusTemporaryRedirect)
-	w.Header().Add("Location", url.String())
+	out := struct {
+		URL string `json:"url"`
+	}{
+		URL: url.String(),
+	}
+	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
+		cr.logger.Error("get clip download url: failed to return response", slog.Any("error", err))
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }

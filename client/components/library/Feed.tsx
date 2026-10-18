@@ -4,17 +4,17 @@ import style from "./Feed.module.scss";
 import { useLibraryContext } from "@/components/library/context";
 import Poster from "@/components/library/Poster";
 import Spinner from "@/components/shared/misc/Spinner";
-import { Cursor } from "@/lib/services/library";
+import { Cursor, Filter } from "@/lib/services/library";
 import { Clip } from "@/lib/models/clip";
 import { DeepReadonly } from "@/lib/type";
 import ColumnarLayout from "@/lib/impl/columnarLayout";
 import { debounce } from "@/lib/debounce";
 import { Duration } from "@/lib/time";
-import { use } from "@/lib/state";
+import { useSnapshot } from "@/lib/state";
 
 export default function Feed() {
   const { library, filter: filterState } = useLibraryContext();
-  const filter = use(filterState);
+  const filter = useSnapshot(filterState);
   const cursorRef = useRef<Cursor>(undefined);
   const layoutRef = useRef(new ColumnarLayout());
   const [clips, setClips] = useState<DeepReadonly<Clip>[]>([]);
@@ -23,7 +23,7 @@ export default function Feed() {
 
   const refresh = useCallback(
     debounce(
-      async () => {
+      async (filter: Filter) => {
         if (cursorRef.current) {
           cursorRef.current.dispose();
         }
@@ -35,11 +35,15 @@ export default function Feed() {
       },
       { delay: new Duration(1500), skipFirst: true },
     ),
-    [library, filter],
+    [library],
   );
 
   useEffect(() => {
-    refresh();
+    refresh(filter);
+  }, [filter]);
+
+  useEffect(() => {
+    refresh({});
   }, [refresh]);
 
   useEffect(() => {

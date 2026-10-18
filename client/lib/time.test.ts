@@ -16,6 +16,6 @@ describe("Duration", () => {
   });
   it("returns nanoseconds", () => {
     const d = new Duration(1234);
-    expect(d.seconds).toBe(1234000);
+    expect(d.nanoseconds).toBe(1234000);
   });
 });

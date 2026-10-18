@@ -86,9 +86,7 @@ export default class HTTPLibrary implements Library {
     if (filter.sortByRating) {
       url.searchParams.append("sort", filter.sortByRating);
     }
-    const response = await fetch(url, {
-      method: "GET",
-    });
+    const response = await fetch(url, { method: "GET" });
     if (response.status != 200) {
       const text = await response.text();
       throw `failed to create cursor: ${response.status} ${text}`;

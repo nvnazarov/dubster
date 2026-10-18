@@ -33,6 +33,7 @@ services:
       DUBSTER__S3__ACCESS_KEY: ${DUBSTER__S3__ACCESS_KEY?}
       DUBSTER__S3__SECRET_KEY: ${DUBSTER__S3__SECRET_KEY?}
       DUBSTER__S3__ENDPOINT: http://seaweedfs:8333/
+      DUBSTER__S3__PUBLIC_ENDPOINT: http://localhost:8333/
       DUBSTER__S3__RENDERS__BUCKET: ${DUBSTER__S3__RENDERS__BUCKET}
       DUBSTER__S3__RENDERS__DOWNLOAD_EXPIRY: ${DUBSTER__S3__RENDERS__DOWNLOAD_EXPIRY}
       DUBSTER__S3__RECORDINGS__BUCKET: ${DUBSTER__S3__RECORDINGS__BUCKET}
@@ -81,11 +82,13 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: ${DUBSTER__S3__ACCESS_KEY?}
       AWS_SECRET_ACCESS_KEY: ${DUBSTER__S3__SECRET_KEY?}
+      S3_EXTERNAL_URL: http://localhost:8333
     volumes:
       - "seaweedfs:/data"
     networks:
       - "private"
     ports:
+      - "8333:8333"
       - "9333:9333"
     healthcheck:
       test:

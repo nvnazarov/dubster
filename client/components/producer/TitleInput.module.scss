@@ -1,0 +1,18 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  color: g.$color-surface-900;
+  outline: none;
+  background-color: transparent;
+  border: 1px dashed g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding-left: g.$sm;
+  padding-right: g.$sm;
+  font-size: g.$font-size-lg;
+  text-overflow: ellipsis;
+  transition-duration: 0.2s;
+
+  &:focus {
+    border-color: g.$color-surface-primary-400;
+  }
+}

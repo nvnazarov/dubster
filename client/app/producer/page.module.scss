@@ -10,13 +10,24 @@
   align-items: center;
 }
 
-.outer {
+.container {
   display: flex;
   flex-direction: column;
   gap: g.$md;
 }
 
 .header {
+  display: flex;
+  justify-content: space-between;
+  gap: g.$md;
+
+  &__actions {
+    display: flex;
+    gap: g.$md;
+  }
+}
+
+.body {
   display: flex;
   gap: g.$md;
 }
@@ -31,6 +42,7 @@
   display: flex;
   flex-direction: column;
   gap: g.$md;
+  width: 400px;
 }
 
 .actions {

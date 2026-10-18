@@ -15,11 +15,15 @@
   overflow: hidden;
   outline: none;
 
+  &-icon {
+    padding: g.$sm g.$sm;
+  }
+
   &-default {
     box-shadow: g.$color-surface-500 0px 0px 0px 1px;
     background-color: g.$color-surface-300;
 
-    &:hover {
+    &:hover:enabled {
       box-shadow: g.$color-surface-500 0px 0px 0px 2px;
     }
   }
@@ -28,7 +32,7 @@
     background-color: g.$color-surface-primary-100;
     box-shadow: g.$color-surface-primary-400 0px 0px 0px 1px;
 
-    &:hover {
+    &:hover:enabled {
       box-shadow: g.$color-surface-primary-400 0px 0px 0px 2px;
     }
   }

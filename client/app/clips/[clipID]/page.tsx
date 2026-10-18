@@ -26,15 +26,19 @@ import HTTPClipVerifier from "@/lib/impl/httpClipVerifier";
 import config from "@/lib/config";
 import { Clip } from "@/lib/models/clip";
 import FakeUsersRepository from "@/lib/impl/fakeUsersRepository";
+import { useObjectProperty } from "@/lib/state";
+import HTTPClipsStore from "@/lib/impl/httpClipsStore";
 
 export default function ClipPage() {
   const { clipID } = useParams();
-  const { userID } = useAuthContext();
+  const auth = useAuthContext();
+  const userID = useObjectProperty(auth, "userID");
   const [clip, setClip] = useState<Clip | null>(null);
   const [loading, setLoading] = useState(true);
   const users = useRef(new FakeUsersRepository()).current;
   const clips = useRef(new HTTPClipsRepostory(config.backendBaseURL)).current;
   const verifier = useRef(new HTTPClipVerifier(config.backendBaseURL)).current;
+  const store = useRef(new HTTPClipsStore(config.backendBaseURL)).current;
   const sessions = useRef(
     new HTTPSessionsRepository(config.backendBaseURL),
   ).current;
@@ -64,6 +68,7 @@ export default function ClipPage() {
             sessions,
             verifier,
             users,
+            store,
           }}
         >
           <div className={style.container}>

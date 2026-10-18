@@ -1,119 +1,132 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import style from "@/components/producer/Video.module.scss";
-import Command from "@/components/producer/commands";
-import { useCommandBus, useEventsQueue } from "@/components/producer/context";
-import { Duration } from "@/lib/util/time";
-import HTMLVideo from "@/lib/impl/htmlVideo";
+import { useProducerContext } from "./context";
+import { Duration } from "@/lib/time";
+import { useObjectProperty } from "@/lib/state";
+import { Segment } from "@/lib/models/clip";
 
-export default function ProducerVideo() {
-  const commands = useCommandBus();
-  const events = useEventsQueue();
+export default function Video() {
+  const { video, producer, clip } = useProducerContext();
+  const videoURLRef = useRef<string | null>(null);
   const htmlVideoRef = useRef<HTMLVideoElement>(null);
+  const videoState = useObjectProperty(video, "state");
+  const selectedSegmentID = useObjectProperty(producer, "selectedSegmentID");
+  const [selectedSegment, setSelectedSegment] = useState<Segment | null>(null);
 
-  const executeVideoOpen = useCallback(
-    async (cmd: Command["video.open"]) => {
-      const htmlVideo = htmlVideoRef.current;
-      if (!htmlVideo) return;
-      const url = URL.createObjectURL(cmd.file);
-      try {
-        await new Promise<void>((resolve, reject) => {
-          const onloadedmetadata = () => {
-            cleanup();
-            resolve();
-          };
-          const onerror = (e: ErrorEvent) => {
-            cleanup();
-            reject(e);
-          };
-          const cleanup = () => {
-            htmlVideo.removeEventListener("loadedmetadata", onloadedmetadata);
-            htmlVideo.removeEventListener("error", onerror);
-          };
-          htmlVideo.addEventListener("loadedmetadata", onloadedmetadata);
-          htmlVideo.addEventListener("error", onerror);
-          htmlVideo.src = url;
-          htmlVideo.load();
-        });
-        events.publish("video.opened", {
-          video: new HTMLVideo(htmlVideo),
-        });
-      } catch (_) {
-        URL.revokeObjectURL(url);
+  useEffect(() => {
+    if (!selectedSegmentID) {
+      setSelectedSegment(null);
+      return;
+    }
+    const segment = clip.segments.get(selectedSegmentID);
+    setSelectedSegment(segment.snapshot());
+    const sub = segment.subscribe(setSelectedSegment);
+    return () => {
+      sub.cancel();
+    };
+  }, [selectedSegmentID, clip]);
+
+  useEffect(() => {
+    return () => {
+      if (videoURLRef.current) {
+        URL.revokeObjectURL(videoURLRef.current);
       }
-    },
-    [events],
-  );
+    };
+  }, []);
 
-  const executeVideoPlay = useCallback(
-    async (cmd: Command["video.play"]) => {
-      const htmlVideo = htmlVideoRef.current;
-      if (!htmlVideo) return;
-      const from = cmd.from?.seconds || 0;
-      const to = cmd.to?.seconds || htmlVideo.duration;
-      await htmlVideo.play();
-      events.publish("video.played", {
-        from: new Duration(from * 1000),
-        to: new Duration(to * 1000),
-      });
-    },
-    [events],
-  );
-
-  const executeVideoStop = useCallback(() => {
+  useEffect(() => {
+    if (videoState === "stopped") return;
     const htmlVideo = htmlVideoRef.current;
     if (!htmlVideo) return;
-    htmlVideo.pause();
-    events.publish("video.stopped", {
-      at: new Duration(htmlVideo.currentTime * 1000),
+    const handleTimeUpdate = () => {
+      let offset = htmlVideo.currentTime * 1000;
+      if (!selectedSegment) {
+        video.offset = new Duration(offset);
+        return;
+      }
+      if (offset > selectedSegment.end.milliseconds) {
+        video.state = "stopped";
+        offset = selectedSegment.end.milliseconds;
+      }
+      video.offset = new Duration(offset);
+    };
+    htmlVideo.addEventListener("timeupdate", handleTimeUpdate);
+    return () => {
+      htmlVideo.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [htmlVideoRef, selectedSegment, videoState]);
+
+  useEffect(() => {
+    const htmlVideo = htmlVideoRef.current;
+    if (!htmlVideo) return;
+    const handleVideoEnded = () => {
+      video.state = "stopped";
+    };
+    const handleVideoMetadataLoaded = () => {
+      video.duration = new Duration(htmlVideo.duration * 1000);
+    };
+    htmlVideo.addEventListener("ended", handleVideoEnded);
+    htmlVideo.addEventListener("loadedmetadata", handleVideoMetadataLoaded);
+    return () => {
+      htmlVideo.removeEventListener("ended", handleVideoEnded);
+      htmlVideo.removeEventListener(
+        "loadedmetadata",
+        handleVideoMetadataLoaded,
+      );
+    };
+  }, [htmlVideoRef]);
+
+  useEffect(() => {
+    const fileSub = video.subscribe("file", (file) => {
+      const htmlVideo = htmlVideoRef.current;
+      if (!file || !htmlVideo) return;
+      const videoURL = URL.createObjectURL(file);
+      if (videoURLRef.current) {
+        URL.revokeObjectURL(videoURLRef.current);
+      }
+      videoURLRef.current = videoURL;
+      htmlVideo.src = videoURL;
     });
-  }, [events]);
+    return () => {
+      fileSub.cancel();
+    };
+  }, [htmlVideoRef]);
 
-  const executeVideoSeek = useCallback(
-    (cmd: Command["video.seek"]) => {
+  useEffect(() => {
+    const stateSub = video.subscribe("state", (state) => {
       const htmlVideo = htmlVideoRef.current;
       if (!htmlVideo) return;
-      htmlVideo.pause();
-      htmlVideo.currentTime = cmd.at.seconds;
-      events.publish("video.stopped", {
-        at: new Duration(htmlVideo.currentTime * 1000),
-      });
-    },
-    [events],
-  );
+      switch (state) {
+        case "paused":
+        case "stopped":
+          try {
+            htmlVideo.pause();
+          } finally {
+          }
+          break;
+        case "playing":
+          htmlVideo.play();
+          break;
+      }
+    });
+    return () => {
+      stateSub.cancel();
+    };
+  }, [htmlVideoRef]);
 
   useEffect(() => {
-    const htmlVideo = htmlVideoRef.current;
-    if (!htmlVideo) return;
-    const onended = () => {
-      events.publish("video.stopped", {
-        at: new Duration(htmlVideo.currentTime * 1000),
-      });
-    };
-    htmlVideo.addEventListener("ended", onended);
+    const offsetSub = video.subscribe("offset", (offset) => {
+      const htmlVideo = htmlVideoRef.current;
+      if (!htmlVideo) return;
+      if (video.state !== "playing") {
+        htmlVideo.currentTime = offset.seconds;
+      }
+    });
     return () => {
-      htmlVideo.removeEventListener("ended", onended);
+      offsetSub.cancel();
     };
-  }, [htmlVideoRef.current]);
-
-  useEffect(() => {
-    commands.handle("video.open", executeVideoOpen);
-    commands.handle("video.play", executeVideoPlay);
-    commands.handle("video.stop", executeVideoStop);
-    commands.handle("video.seek", executeVideoSeek);
-    return () => {
-      commands.unhandle("video.open", executeVideoOpen);
-      commands.unhandle("video.play", executeVideoPlay);
-      commands.unhandle("video.stop", executeVideoStop);
-      commands.unhandle("video.seek", executeVideoSeek);
-    };
-  }, [
-    commands,
-    executeVideoOpen,
-    executeVideoPlay,
-    executeVideoStop,
-    executeVideoSeek,
-  ]);
+  }, [htmlVideoRef]);
 
   return <video ref={htmlVideoRef} className={style.container} />;
 }

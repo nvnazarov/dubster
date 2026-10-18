@@ -5,7 +5,7 @@ import "time"
 type Role struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	Sex  string `json:"sex"`
+	Sex  string `json:"sex,omitempty"`
 }
 
 type Segment struct {
@@ -20,7 +20,7 @@ type Clip struct {
 	ID           string             `json:"id"`
 	AuthorID     string             `json:"authorID"`
 	Title        string             `json:"title"`
-	Description  string             `json:"description"`
+	Description  string             `json:"description,omitempty"`
 	Segments     map[string]Segment `json:"segments"`
 	Roles        map[string]Role    `json:"roles"`
 	Rating       float64            `json:"rating"`

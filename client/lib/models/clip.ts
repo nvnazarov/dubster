@@ -1,6 +1,11 @@
 import { User } from "@/lib/models/user";
 import { Duration } from "@/lib/time";
 
+export const MaxTitleLength = 128;
+export const MaxDescriptionLength = 2048;
+export const MaxSegmentsCount = 100;
+export const MaxRolesCount = 10;
+
 export type Sex = "male" | "female";
 
 export interface Role {

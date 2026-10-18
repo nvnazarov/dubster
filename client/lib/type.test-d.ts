@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
-import { deepIgnorer, DeepIgnorer, DeepPartial, DeepReadonly } from "@/lib/util/type";
+import { deepIgnorer, DeepIgnorer, DeepPartial, DeepReadonly } from "@/lib/type";
 
 describe("DeepPartial", () => {
   it("preserves basic types", () => {

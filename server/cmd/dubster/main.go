@@ -58,37 +58,68 @@ func main() {
 	postgresClipRepository := postgresclip.NewRepository(pool)
 	postgresSessionRepository := postgressession.NewRepository(pool)
 
-	s3ClipsBucket, err := s3.NewBucket(s3.Options{
-		Endpoint:       config.S3.Endpoint,
-		Bucket:         config.S3.ClipsBucket,
-		UploadExpiry:   config.S3.ClipsUploadExpiry,
-		DownloadExpiry: config.S3.ClipsDownloadExpiry,
-		MaxObjectSize:  size.Size(config.Clip.MaxSize),
-		AccessKey:      config.S3.AccessKey.String(),
-		SecretKey:      config.S3.SecretKey.String(),
+	s3ClipsPrivateBucket, err := s3.NewBucket(s3.Options{
+		Endpoint:  config.S3.Endpoint,
+		Bucket:    config.S3.ClipsBucket,
+		AccessKey: config.S3.AccessKey.Secret(),
+		SecretKey: config.S3.SecretKey.Secret(),
 	})
 	if err != nil {
 		logger.Error("init: clips s3 bucket: failed", slog.Any("error", err))
 		os.Exit(1)
 	}
-	s3RecordingsBucket, err := s3.NewBucket(s3.Options{
-		Endpoint:      config.S3.Endpoint,
-		Bucket:        config.S3.RecordingsBucket,
-		UploadExpiry:  config.S3.RecordingsUploadExpiry,
-		MaxObjectSize: size.Size(config.Session.MaxRecordingSize),
-		AccessKey:     config.S3.AccessKey.String(),
-		SecretKey:     config.S3.SecretKey.String(),
+	s3ClipsPublicBucket, err := s3.NewBucket(s3.Options{
+		Endpoint:       config.S3.PublicEndpoint,
+		Bucket:         config.S3.ClipsBucket,
+		UploadExpiry:   config.S3.ClipsUploadExpiry,
+		DownloadExpiry: config.S3.ClipsDownloadExpiry,
+		MaxObjectSize:  size.Size(config.Clip.MaxSize),
+		AccessKey:      config.S3.AccessKey.Secret(),
+		SecretKey:      config.S3.SecretKey.Secret(),
+	})
+	if err != nil {
+		logger.Error("init: clips s3 bucket: failed", slog.Any("error", err))
+		os.Exit(1)
+	}
+	s3RecordingsPrivateBucket, err := s3.NewBucket(s3.Options{
+		Endpoint:  config.S3.Endpoint,
+		Bucket:    config.S3.RecordingsBucket,
+		AccessKey: config.S3.AccessKey.Secret(),
+		SecretKey: config.S3.SecretKey.Secret(),
 	})
 	if err != nil {
 		logger.Error("init: recordings s3 bucket: failed", slog.Any("error", err))
 		os.Exit(1)
 	}
-	s3RendersBucket, err := s3.NewBucket(s3.Options{
-		Endpoint:       config.S3.Endpoint,
+	// TODO: use public bucket during session.
+	_, err = s3.NewBucket(s3.Options{
+		Endpoint:      config.S3.PublicEndpoint,
+		Bucket:        config.S3.RecordingsBucket,
+		UploadExpiry:  config.S3.RecordingsUploadExpiry,
+		MaxObjectSize: size.Size(config.Session.MaxRecordingSize),
+		AccessKey:     config.S3.AccessKey.Secret(),
+		SecretKey:     config.S3.SecretKey.Secret(),
+	})
+	if err != nil {
+		logger.Error("init: clips s3 bucket: failed", slog.Any("error", err))
+		os.Exit(1)
+	}
+	s3RendersPrivateBucket, err := s3.NewBucket(s3.Options{
+		Endpoint:  config.S3.Endpoint,
+		Bucket:    config.S3.RendersBucket,
+		AccessKey: config.S3.AccessKey.Secret(),
+		SecretKey: config.S3.SecretKey.Secret(),
+	})
+	if err != nil {
+		logger.Error("init: renders s3 bucket: failed", slog.Any("error", err))
+		os.Exit(1)
+	}
+	s3RendersPublicBucket, err := s3.NewBucket(s3.Options{
+		Endpoint:       config.S3.PublicEndpoint,
 		Bucket:         config.S3.RendersBucket,
 		DownloadExpiry: config.S3.RendersDownloadExpiry,
-		AccessKey:      config.S3.AccessKey.String(),
-		SecretKey:      config.S3.SecretKey.String(),
+		AccessKey:      config.S3.AccessKey.Secret(),
+		SecretKey:      config.S3.SecretKey.Secret(),
 	})
 	if err != nil {
 		logger.Error("init: renders s3 bucket: failed", slog.Any("error", err))
@@ -113,8 +144,8 @@ func main() {
 			grader := grader.New(grader.Options{
 				Clips:      postgresClipRepository,
 				Sessions:   postgresSessionRepository,
-				Videos:     s3ClipsBucket,
-				Recordings: s3RecordingsBucket,
+				Videos:     s3ClipsPrivateBucket,
+				Recordings: s3RecordingsPrivateBucket,
 				Handler:    command.Handler[string](memCommandQueue, commandGrade),
 				Publisher:  event.Publisher[string](memEventsQueue, eventGraded),
 				Logger:     logger,
@@ -133,8 +164,8 @@ func main() {
 			renderer := renderer.New(renderer.Options{
 				Clips:      postgresClipRepository,
 				Sessions:   postgresSessionRepository,
-				Recordings: s3RecordingsBucket,
-				Renders:    s3RendersBucket,
+				Recordings: s3RecordingsPrivateBucket,
+				Renders:    s3RendersPrivateBucket,
 				Handler:    command.Handler[string](memCommandQueue, commandRender),
 				Publisher:  event.Publisher[string](memEventsQueue, eventRendered),
 				Logger:     logger,
@@ -152,7 +183,7 @@ func main() {
 		go func(index int) {
 			verifier := verifier.New(verifier.Options{
 				Clips:           postgresClipRepository,
-				Blobs:           s3ClipsBucket,
+				Blobs:           s3ClipsPrivateBucket,
 				Handler:         command.Handler[string](memCommandQueue, commandVerify),
 				Publisher:       event.Publisher[verifier.Event](memEventsQueue, eventVerified),
 				Logger:          logger,
@@ -181,7 +212,7 @@ func main() {
 			}),
 			Store: clip.NewStore(clip.StoreOptions{
 				Clips:  postgresClipRepository,
-				Store:  s3ClipsBucket,
+				Store:  s3ClipsPublicBucket,
 				Logger: logger,
 			}),
 			Verification: clip.NewVerification(clip.VerificationOptions{
@@ -194,7 +225,7 @@ func main() {
 		Sessions: api.NewSessionsRouter(session.NewService(
 			postgresSessionRepository,
 			postgresClipRepository,
-			s3RendersBucket,
+			s3RendersPublicBucket,
 			logger,
 		)),
 		CORSAllowedOrigins: config.Server.CORS.AllowedOrigins,

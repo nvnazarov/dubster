@@ -1,9 +1,0 @@
-@use "../../style/global.scss" as g;
-
-.container {
-  position: absolute;
-  width: 5px;
-  background-color: g.$color-surface-1000;
-  z-index: 10;
-  pointer-events: none;
-}

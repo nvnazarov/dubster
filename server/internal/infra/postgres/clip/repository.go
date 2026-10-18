@@ -88,7 +88,7 @@ func (r *Repository) BatchAt(ctx context.Context, encodedCursor string) (library
         date_created,
         date_verified
 	FROM clips
-	WHERE id > $1
+	WHERE id > $1 AND deleted = false
 	ORDER BY id ASC
 	LIMIT 20`
 	rows, err := r.pool.Query(ctx, sql, c.LastClipID)
@@ -230,7 +230,7 @@ func getClip(ctx context.Context, exec executor, clipID string) (clip.Clip, erro
 }
 
 func deleteClip(ctx context.Context, exec executor, clipID string) error {
-	tag, err := exec.Exec(ctx, `DELETE FROM clips WHERE id = $1`, clipID)
+	tag, err := exec.Exec(ctx, `UPDATE clips SET deleted = true WHERE id = $1`, clipID)
 	if err != nil {
 		return err
 	}

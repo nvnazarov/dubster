@@ -19,10 +19,13 @@ export default function Button({
   progress,
   ...props
 }: ButtonAttributes) {
-  const klass =
+  let klass =
     style.button +
     " " +
     (primary ? style["button-primary"] : style["button-default"]);
+  if (!text) {
+    klass += " " + style["button-icon"];
+  }
   return (
     <button className={klass} {...props}>
       {progress !== undefined ? (
@@ -30,7 +33,7 @@ export default function Button({
       ) : (
         icon !== undefined && <img src={icon} />
       )}
-      <span>{text}</span>
+      {text && <span>{text}</span>}
       {progress !== undefined && (
         <div className={style.progress} style={{ width: `${progress}%` }} />
       )}

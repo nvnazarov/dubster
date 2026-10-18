@@ -9,7 +9,7 @@ export class Duration implements DeepIgnorer {
   constructor(readonly milliseconds: number = 0) { }
 
   get nanoseconds(): number {
-    return this.milliseconds * 1000;
+    return Math.floor(this.milliseconds * 1000);
   }
 
   get seconds(): number {

@@ -1,11 +1,11 @@
 import { createContext, useContext } from "react";
 
 import Library, { Filter } from "@/lib/services/library";
-import { State } from "@/lib/state";
+import { StateObject } from "@/lib/state";
 
 export interface LibraryContext {
   library: Library;
-  filter: State<Filter>;
+  filter: StateObject<Filter>;
 }
 
 const context = createContext<LibraryContext>({} as any);

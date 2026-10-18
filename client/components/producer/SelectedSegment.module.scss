@@ -1,15 +1,10 @@
 @use "../../style/global.scss" as g;
 
-.segment {
+.container {
   display: flex;
   gap: g.$md;
-  background-color: g.$color-surface-0;
-  border: 1px solid g.$color-surface-400;
-  border-radius: g.$radius-md;
-  padding: g.$sm;
+  background-color: transparent;
   align-items: center;
-  color: g.$color-surface-900;
-  font-size: g.$font-size-md;
 }
 
 .empty {
@@ -17,5 +12,42 @@
   border-radius: g.$radius-sm;
   padding: g.$sm;
   text-align: center;
-  color: g.$color-surface-600;
+  color: g.$color-surface-700;
+  font-size: g.$font-size-lg;
+}
+
+.role {
+  color: g.$color-surface-900;
+  outline: none;
+  background-color: transparent;
+  border: 1px dashed g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding: g.$sm;
+  font-size: g.$font-size-lg;
+  transition-duration: 0.2s;
+
+  &:focus {
+    border-color: g.$color-surface-primary-400;
+  }
+}
+
+.says {
+  color: g.$color-surface-700;
+  font-size: g.$font-size-md;
+}
+
+.line {
+  color: g.$color-surface-900;
+  outline: none;
+  background-color: transparent;
+  border: 1px dashed g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding: g.$sm;
+  font-size: g.$font-size-lg;
+  text-overflow: ellipsis;
+  transition-duration: 0.2s;
+
+  &:focus {
+    border-color: g.$color-surface-primary-400;
+  }
 }

@@ -52,6 +52,7 @@ type S3 struct {
 	AccessKey              SecretString  `env:"ACCESS_KEY,required"`
 	SecretKey              SecretString  `env:"SECRET_KEY,required"`
 	Endpoint               string        `env:"ENDPOINT,required"`
+	PublicEndpoint         string        `env:"PUBLIC_ENDPOINT,required"`
 	RendersBucket          string        `env:"RENDERS__BUCKET,required"`
 	RendersDownloadExpiry  time.Duration `env:"RENDERS__DOWNLOAD_EXPIRY,default=30m"`
 	ClipsBucket            string        `env:"CLIPS__BUCKET,required"`
@@ -62,6 +63,10 @@ type S3 struct {
 }
 
 type SecretString string
+
+func (s SecretString) Secret() string {
+	return string(s)
+}
 
 func (s SecretString) String() string {
 	return "***"

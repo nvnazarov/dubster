@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS clips(
     roles           JSONB NOT NULL,
     verified        BOOLEAN NOT NULL,
     date_verified   TIMESTAMPTZ,
-    date_created    TIMESTAMPTZ NOT NULL
+    date_created    TIMESTAMPTZ NOT NULL,
+    deleted         BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS sessions(

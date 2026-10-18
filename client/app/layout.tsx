@@ -4,7 +4,7 @@ import React from "react";
 
 import "@/app/global.css";
 import AuthContext from "@/components/shared/auth/context";
-import { state } from "@/lib/state";
+import { makeState } from "@/lib/state";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <AuthContext value={state({ userID: null })}>
+      <AuthContext value={makeState({ userID: "0" })}>
         <body>{children}</body>
       </AuthContext>
     </html>

@@ -5,6 +5,7 @@ import SessionsRepository from "@/lib/services/sessionsRepository";
 import ClipsRepository from "@/lib/services/clipsRepository";
 import ClipVerifier from "@/lib/services/clipVerifier";
 import UsersRepository from "@/lib/services/usersRepository";
+import ClipsStore from "@/lib/services/clipsStore";
 
 export interface ClipContext {
   clip: Clip;
@@ -12,6 +13,7 @@ export interface ClipContext {
   sessions: SessionsRepository;
   verifier: ClipVerifier;
   users: UsersRepository;
+  store: ClipsStore;
 }
 
 const context = createContext<ClipContext>({} as any);
