@@ -1,0 +1,34 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  height: calc(2 * g.$sm + g.$font-size-md);
+
+  input[type="checkbox"] {
+    appearance: none;
+  }
+
+  input[type="checkbox"] + label {
+    font-size: g.$font-size-md;
+    box-shadow: g.$color-surface-400 0px 0px 0px 1px;
+    background-color: g.$color-surface-200;
+    color: g.$color-surface-600;
+    padding: g.$sm g.$md;
+    border-radius: 100vmax;
+    transition-duration: 0.2s;
+  }
+
+  input[type="checkbox"] + label:hover {
+    box-shadow: g.$color-surface-400 0px 0px 0px 2px;
+  }
+
+  input[type="checkbox"]:checked + label {
+    color: g.$color-surface-1000;
+    box-shadow: g.$color-surface-primary-400 0px 0px 0px 1px;
+    background-color: g.$color-surface-primary-100;
+  }
+
+  input[type="checkbox"]:checked + label:hover {
+    box-shadow: g.$color-surface-primary-400 0px 0px 0px 2px;
+    background-color: g.$color-surface-primary-100;
+  }
+}

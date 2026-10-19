@@ -11,7 +11,7 @@ class FakeCursor implements Cursor {
   private _clips: Clip[] = [];
   private queue: Promise<void> = Promise.resolve();
 
-  constructor(filter: DeepReadonly<Filter> = {}, {
+  constructor(filter: DeepReadonly<Filter> = { sortByRating: false }, {
     pageSize = 20,
     totalClips = 45
   }: {

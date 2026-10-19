@@ -28,7 +28,25 @@ CREATE TABLE IF NOT EXISTS sessions(
 	date_rendered   TIMESTAMPTZ
 );
 
--- CREATE INDEX IF NOT EXISTS idx_clips_author_id ON clips(author_id);
--- CREATE INDEX idx_
--- CREATE INDEX idx_clips_roles_number ON clips();
--- CREATE INDEX idx_sessions_participants ON sessions(participants);
+CREATE OR REPLACE FUNCTION jsonb_object_key_count(obj JSONB)
+RETURNS INTEGER
+LANGUAGE SQL
+IMMUTABLE
+STRICT
+AS $$
+    SELECT COUNT(*)::INTEGER
+    FROM jsonb_object_keys(obj);
+$$;
+
+-- Index for searches by author with optional rating sort. 
+CREATE INDEX idx_clips_author_rating ON clips (author_id, rating DESC NULLS LAST, id ASC) WHERE deleted = FALSE;
+
+-- Indexes for global searches by rating.
+CREATE INDEX idx_clips_rating_desc ON clips (rating DESC NULLS LAST, id ASC) WHERE deleted = FALSE;
+
+-- Index for number of roles in a clip.
+CREATE INDEX idx_clips_number_of_roles ON clips (jsonb_object_key_count(roles)) WHERE deleted = FALSE;
+
+-- Case-insensitive substring search on title.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_clips_title_trgm ON clips USING GIN (title gin_trgm_ops) WHERE deleted = FALSE;

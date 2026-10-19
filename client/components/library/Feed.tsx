@@ -43,7 +43,7 @@ export default function Feed() {
   }, [filter]);
 
   useEffect(() => {
-    refresh({});
+    refresh({ sortByRating: false });
   }, [refresh]);
 
   useEffect(() => {

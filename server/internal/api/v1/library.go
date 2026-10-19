@@ -38,10 +38,8 @@ func (lr *LibraryRouter) NewCursor(w http.ResponseWriter, r *http.Request) {
 				if n, err := strconv.Atoi(v[0]); err == nil {
 					params.NumberOfRoles = n
 				}
-			case "order":
+			case "rating":
 				switch {
-				case v[0] == "asc":
-					params.Order = library.OrderRatingAsc
 				case v[0] == "desc":
 					params.Order = library.OrderRatingDesc
 				}

@@ -115,6 +115,7 @@ export function makeState<T extends object>(object: T): StateObject<T> {
     snapshot(): ObjectSnapshot<T> {
       const result: any = {}
       for (const [property, value] of Object.entries(this)) {
+        if (property === "subscribe" || property === "snapshot") continue;
         if (isState(value)) {
           result[property] = (value as State<typeof value>).snapshot();
         } else {

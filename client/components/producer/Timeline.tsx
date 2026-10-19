@@ -1,8 +1,8 @@
-import { MouseEvent, useCallback } from "react";
+import { MouseEvent as ReactMouseEvent, useCallback } from "react";
 
 import style from "@/components/producer/Timeline.module.scss";
-import { Duration } from "@/lib/time";
 import { useProducerContext } from "@/components/producer/context";
+import { Duration } from "@/lib/time";
 import { makeState, useObjectProperty, useSnapshot } from "@/lib/state";
 
 export default function Timeline() {
@@ -19,7 +19,7 @@ function Scroll() {
   const duration = useObjectProperty(video, "duration");
 
   const seekClickPosition = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
+    (e: ReactMouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
       const offset =
         (video.duration.milliseconds * (e.pageX - rect.x)) /
@@ -39,7 +39,7 @@ function Scroll() {
       }}
       onClick={seekClickPosition}
     >
-      <Pointer />
+      {duration.milliseconds > 0 && <Pointer />}
     </div>
   );
 }
@@ -60,7 +60,8 @@ function Segments() {
   const segments = useSnapshot(clip.segments);
 
   const createSegmentAtClickPosition = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
+    (e: ReactMouseEvent<HTMLDivElement>) => {
+      if (video.duration.milliseconds <= 0) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const offset =
         (video.duration.milliseconds * (e.pageX - rect.x)) /
@@ -103,7 +104,8 @@ export function SegmentView({ segmentID }: { segmentID: string }) {
   const selectedSegmentID = useObjectProperty(producer, "selectedSegmentID");
 
   const selectThisSegment = useCallback(
-    (e: MouseEvent) => {
+    (e: ReactMouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
       e.stopPropagation();
       producer.selectedSegmentID = segment.id;
       video.offset = segment.begin;
@@ -133,6 +135,78 @@ export function SegmentView({ segmentID }: { segmentID: string }) {
         opacity: isSelected ? 0.9 : 0.2,
         pointerEvents: isSelected ? "none" : "all",
       }}
-    ></div>
+    >
+      {isSelected && (
+        <>
+          <BeginBar segmentID={selectedSegmentID} />{" "}
+          <EndBar segmentID={selectedSegmentID} />
+        </>
+      )}
+    </div>
   );
+}
+
+function BeginBar({ segmentID }: { segmentID: string }) {
+  const { clip, video } = useProducerContext();
+  const segment = clip.segments.get(segmentID);
+
+  const startDrag = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startBegin = segment.begin;
+    const startEnd = segment.end;
+    const container = e.currentTarget.parentElement!.parentElement!;
+    const handleMouseMove = (e: MouseEvent) => {
+      const ratio = video.duration.milliseconds / container.clientWidth;
+      const begin = Math.min(
+        Math.max((e.clientX - startX) * ratio + startBegin.milliseconds, 0),
+        startEnd.milliseconds - 500,
+      );
+      segment.begin = new Duration(begin);
+      video.offset = segment.begin;
+    };
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }, []);
+
+  return <div className={style.beginbar} onMouseDown={startDrag}></div>;
+}
+
+function EndBar({ segmentID }: { segmentID: string }) {
+  const { clip, video } = useProducerContext();
+  const segment = clip.segments.get(segmentID);
+
+  const startDrag = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startBegin = segment.begin;
+    const startEnd = segment.end;
+    const container = e.currentTarget.parentElement!.parentElement!;
+    const handleMouseMove = (e: MouseEvent) => {
+      const ratio = video.duration.milliseconds / container.clientWidth;
+      const end = Math.max(
+        Math.min(
+          (e.clientX - startX) * ratio + startEnd.milliseconds,
+          video.duration.milliseconds,
+        ),
+        startBegin.milliseconds + 500,
+      );
+      segment.end = new Duration(end);
+      video.offset = segment.end;
+    };
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }, []);
+
+  return <div className={style.endbar} onMouseDown={startDrag}></div>;
 }

@@ -26,7 +26,7 @@ export interface Filter {
   title?: string;
   authorID?: string;
   numberOfRoles?: number;
-  sortByRating?: "asc" | "desc";
+  sortByRating: boolean;
 };
 
 /**

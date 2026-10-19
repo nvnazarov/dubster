@@ -97,7 +97,7 @@ export default function ClipPage() {
                 {userID == clip.authorID && (
                   <div className={style.authoractions}>
                     <DeleteButton />
-                    <VerifyButton />
+                    {!clip.verified && <VerifyButton />}
                   </div>
                 )}
               </div>

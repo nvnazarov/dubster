@@ -84,7 +84,7 @@ export default class HTTPLibrary implements Library {
       url.searchParams.append("title", filter.title);
     }
     if (filter.sortByRating) {
-      url.searchParams.append("sort", filter.sortByRating);
+      url.searchParams.append("rating", "desc");
     }
     const response = await fetch(url, { method: "GET" });
     if (response.status != 200) {

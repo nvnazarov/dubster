@@ -8,11 +8,7 @@ export default function SelectedSegment() {
   const { producer } = useProducerContext();
   const selectedSegmentID = useObjectProperty(producer, "selectedSegmentID");
 
-  return selectedSegmentID ? (
-    <Form segmentID={selectedSegmentID} />
-  ) : (
-    <div className={style.empty}>Please, select a segment.</div>
-  );
+  return selectedSegmentID ? <Form segmentID={selectedSegmentID} /> : <></>;
 }
 
 function Form({ segmentID }: { segmentID: string }) {

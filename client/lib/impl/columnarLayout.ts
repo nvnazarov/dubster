@@ -20,7 +20,7 @@ export default class ColumnarLayout implements Layout {
   add(clips: DeepReadonly<Clip[]>) {
     for (const clip of clips) {
       const weight = this.weight(clip);
-      const shake = Math.floor(Math.random() * 20);
+      const shake = 0; // Math.floor(Math.random() * 20);
       const height = this.minHeight + weight * (this.maxHeight - this.minHeight) + shake;
       const column = this.columns.indexOf(Math.min(...this.columns));
       this.items.push({

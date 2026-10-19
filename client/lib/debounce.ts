@@ -15,7 +15,7 @@ export function debounce<T extends (...args: any) => void>(f: T, options: {
     if (timeout) {
       clearTimeout(timeout);
     }
-    timeout = setTimeout(() => f(args), options.delay.milliseconds);
+    timeout = setTimeout(() => f(...args), options.delay.milliseconds);
   };
   return debounced as T;
 }

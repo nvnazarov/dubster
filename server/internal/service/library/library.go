@@ -18,7 +18,6 @@ type Order int
 
 const (
 	OrderDefault Order = iota
-	OrderRatingAsc
 	OrderRatingDesc
 )
 

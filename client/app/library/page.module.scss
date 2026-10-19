@@ -10,15 +10,21 @@
 
 .container {
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: g.$md;
+  gap: g.$lg;
   overflow: hidden;
   padding-top: g.$md;
 }
 
-.feed {
+.aside {
+  display: flex;
+  margin-top: 6px;
+  flex-direction: column;
   flex: 1;
+  justify-content: start;
+  align-items: end;
+  gap: g.$lg;
+}
+
+.feed {
   overflow: hidden;
 }

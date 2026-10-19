@@ -5,6 +5,7 @@ import (
 	jsonv1 "encoding/json"
 	"encoding/json/v2"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -33,11 +34,12 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 }
 
 type cursor struct {
-	LastClipID    string        `json:"lastClipID"`
-	Order         library.Order `json:"order"`
-	AuthorID      string        `json:"authorID"`
-	NumberOfRoles int           `json:"numberOfRoles"`
-	Title         string        `json:"title"`
+	LastClipID     string        `json:"lastClipID"`
+	LastClipRating float64       `json:"lastClipRating"`
+	Order          library.Order `json:"order"`
+	AuthorID       string        `json:"authorID"`
+	NumberOfRoles  int           `json:"numberOfRoles"`
+	Title          string        `json:"title"`
 }
 
 func (c *cursor) encode() (string, error) {
@@ -70,12 +72,11 @@ func (r *Repository) NewCursor(ctx context.Context, params library.SearchParams)
 }
 
 func (r *Repository) BatchAt(ctx context.Context, encodedCursor string) (library.Batch, error) {
-	// TODO: actually implement filtering.
 	var c cursor
 	if err := c.decode(encodedCursor); err != nil {
 		return library.Batch{}, err
 	}
-	const sql = `
+	var sql = `
 	SELECT
 		id,
         author_id,
@@ -88,10 +89,36 @@ func (r *Repository) BatchAt(ctx context.Context, encodedCursor string) (library
         date_created,
         date_verified
 	FROM clips
-	WHERE id > $1 AND deleted = false
-	ORDER BY id ASC
-	LIMIT 20`
-	rows, err := r.pool.Query(ctx, sql, c.LastClipID)
+	WHERE
+		deleted = false`
+	var args []any
+	filter := func(condition string, params ...any) {
+		indices := make([]any, 0, len(params))
+		for _, p := range params {
+			args = append(args, p)
+			indices = append(indices, len(args))
+		}
+		sql += fmt.Sprintf(" AND %s", fmt.Sprintf(condition, indices...))
+	}
+	if c.Title != "" {
+		filter("title ILIKE '%%' || $%d || '%%'", c.Title)
+	}
+	if c.AuthorID != "" {
+		filter("author_id = $%d", c.AuthorID)
+	}
+	if c.NumberOfRoles != 0 {
+		filter("jsonb_object_key_count(roles) = $%d", c.NumberOfRoles)
+	}
+	switch c.Order {
+	case library.OrderRatingDesc:
+		filter("(rating < $%d OR (rating = $%d AND id > $%d))", c.LastClipRating, c.LastClipRating, c.LastClipID)
+		sql += " ORDER BY rating DESC NULLS LAST, id ASC"
+	default:
+		filter("id > $%d", c.LastClipID)
+		sql += " ORDER BY id ASC"
+	}
+	sql += " LIMIT 20"
+	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
 		return library.Batch{}, err
 	}
@@ -127,6 +154,7 @@ func (r *Repository) BatchAt(ctx context.Context, encodedCursor string) (library
 	if len(clips) > 0 {
 		ac := c
 		ac.LastClipID = clips[len(clips)-1].ID
+		ac.LastClipRating = clips[len(clips)-1].Rating
 		if enc, err := ac.encode(); err != nil {
 			return library.Batch{}, err
 		} else {

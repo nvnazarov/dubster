@@ -9,6 +9,8 @@ import LibraryContext from "@/components/library/context";
 import HTTPLibrary from "@/lib/impl/httpLibrary";
 import config from "@/lib/config";
 import { makeState } from "@/lib/state";
+import FilterFromQueryParams from "@/components/library/FilterFromQueryParams";
+import SortByRatingFilter from "@/components/library/SortByRatingFilter";
 
 export default function LibraryPage() {
   const library = useRef(new HTTPLibrary(config.backendBaseURL)).current;
@@ -18,14 +20,19 @@ export default function LibraryPage() {
       <LibraryContext
         value={{
           library,
-          filter: makeState({}),
+          filter: makeState({ sortByRating: false }),
         }}
       >
         <div className={style.container}>
-          <TitleFilter />
+          <div className={style.aside}>
+            <FilterFromQueryParams />
+            <TitleFilter />
+            <SortByRatingFilter />
+          </div>
           <div className={style.feed}>
             <Feed />
           </div>
+          <div className={style.aside}></div>
         </div>
       </LibraryContext>
     </div>

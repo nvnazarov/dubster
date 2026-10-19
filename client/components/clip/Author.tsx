@@ -23,7 +23,7 @@ export default function ClipAuthor() {
       {author ? (
         <>
           <span className={style.at}>by @</span>
-          {author.name}
+          <span className={style.name}>{author.name}</span>
         </>
       ) : (
         "by Anonymous user"
