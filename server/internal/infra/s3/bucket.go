@@ -85,7 +85,7 @@ func (b *Bucket) OpenRead(ctx context.Context, id string) (io.ReadCloser, error)
 		Key:    &id,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get bucket object: %w", err)
 	}
 	return output.Body, nil
 }
@@ -98,7 +98,7 @@ func (b *Bucket) UploadURL(ctx context.Context, id string) (*url.URL, error) {
 		p.Expires = b.uploadExpiry
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get presigned url for put object: %w", err)
 	}
 	return url.Parse(output.URL)
 }
@@ -111,7 +111,7 @@ func (b *Bucket) DownloadURL(ctx context.Context, id string) (*url.URL, error) {
 		p.Expires = b.downloadExpiry
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get presigned url for get object: %w", err)
 	}
 	return url.Parse(output.URL)
 }

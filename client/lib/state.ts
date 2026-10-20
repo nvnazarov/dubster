@@ -165,6 +165,7 @@ export class Entities<T> implements State<ReadonlyArray<Snapshot<T>>> {
   }
 
   add(entity: T): void {
+    console.log("added");
     const id = this.id(entity);
     const entityInside = this._entities[id];
     if (entityInside) {
@@ -177,11 +178,34 @@ export class Entities<T> implements State<ReadonlyArray<Snapshot<T>>> {
     notifySubscribers(this.key, this.snapshot());
   };
 
-  delete(id: string): void {
-    const entity = this.get(id);
-    if (!entity) {
-      throw `entity ${id} not found`;
+  replace(entity: T): void {
+    console.log("replaced");
+    const id = this.id(entity);
+    this._subs[id]?.cancel();
+    delete this._subs[id];
+    this._entities[id] = entity;
+    if (isState(entity)) {
+      this._subs[id] = (entity as State<any>).subscribe((_) => notifySubscribers(this.key, this.snapshot()));
     }
+    notifySubscribers(this.key, this.snapshot());
+  }
+
+  fromEntries(entries: [string, T][]): void {
+    for (const sub of Object.values(this._subs)) {
+      sub.cancel();
+    }
+    this._subs = {};
+    this._entities = {};
+    for (const [id, entity] of entries) {
+      this._entities[id] = entity;
+      if (isState(entity)) {
+        this._subs[id] = (entity as State<any>).subscribe((_) => notifySubscribers(this.key, this.snapshot()));
+      }
+    }
+    notifySubscribers(this.key, this.snapshot());
+  }
+
+  delete(id: string): void {
     delete this._entities[id];
     this._subs[id]?.cancel();
     delete this._subs[id];

@@ -14,5 +14,9 @@ WORKDIR /app
 COPY --from=build /app/app .
 CMD ["./app"]
 
-FROM deps AS development
-WORKDIR /app
+FROM deps AS development-deps
+RUN go install github.com/air-verse/air@latest
+
+FROM development-deps AS development
+COPY . .
+CMD ["air", "-c", ".air.toml"]

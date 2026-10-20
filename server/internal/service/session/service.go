@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 	"errors"
-	"log/slog"
+	"fmt"
 	"net/url"
 	"time"
 	"uuid"
@@ -22,16 +22,14 @@ type Service struct {
 	sessions Repository
 	renders  blob.Downloader
 	hub      *hub
-	logger   *slog.Logger
 }
 
-func NewService(sessions Repository, clips clip.Repository, renders blob.Downloader, logger *slog.Logger) *Service {
+func NewService(sessions Repository, clips clip.Repository, renders blob.Downloader) *Service {
 	return &Service{
 		clips:    clips,
 		sessions: sessions,
 		renders:  renders,
 		hub:      newHub(sessions),
-		logger:   logger,
 	}
 }
 
@@ -41,14 +39,13 @@ type CreateSessionParams struct {
 }
 
 func (s *Service) CreateSession(ctx context.Context, p CreateSessionParams) (Session, error) {
-	clip, err := s.clips.Get(ctx, p.ClipID)
+	c, err := s.clips.Get(ctx, p.ClipID)
 	if err != nil {
-		s.logger.Error("session service: get clip: error", slog.Any("error", err))
-		return Session{}, err
+		if errors.Is(err, clip.ErrNotFound) {
+			return Session{}, err
+		}
+		return Session{}, fmt.Errorf("get clip \"%s\": %w", p.ClipID, err)
 	}
-	// if !clip.Verified {
-	// 	return Session{}, ErrClipNotVerified
-	// }
 	session := Session{
 		ID:           uuid.New().String(),
 		HostID:       p.HostID,
@@ -61,10 +58,9 @@ func (s *Service) CreateSession(ctx context.Context, p CreateSessionParams) (Ses
 		DateCreated:  time.Now(),
 	}
 	if err := s.sessions.Save(ctx, session); err != nil {
-		s.logger.Error("session service: save session: error", slog.Any("error", err))
-		return session, err
+		return session, fmt.Errorf("save session: %w", err)
 	}
-	s.hub.create(session, clip)
+	s.hub.create(session, c)
 	return session, nil
 }
 
@@ -76,7 +72,7 @@ type GetSessionParams struct {
 func (s *Service) GetSession(ctx context.Context, p GetSessionParams) (Session, error) {
 	session, err := s.sessions.Get(ctx, p.SessionID)
 	if err != nil {
-		return Session{}, err
+		return Session{}, fmt.Errorf("get session \"%s\": %w", p.SessionID, err)
 	}
 	if _, ok := session.Participants[p.UserID]; !ok {
 		return Session{}, ErrNotParticipant
@@ -85,7 +81,11 @@ func (s *Service) GetSession(ctx context.Context, p GetSessionParams) (Session, 
 }
 
 func (c *Service) GetUserSessions(ctx context.Context, userID string) ([]Session, error) {
-	return c.sessions.ByParticipant(ctx, userID)
+	sessions, err := c.sessions.ByParticipant(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get user \"%s\" sessions: %w", userID, err)
+	}
+	return sessions, nil
 }
 
 type GetSessionRenderDownloadURLParams struct {
@@ -96,12 +96,16 @@ type GetSessionRenderDownloadURLParams struct {
 func (s *Service) GetSessionRenderDownloadURL(ctx context.Context, p GetSessionRenderDownloadURLParams) (*url.URL, error) {
 	session, err := s.sessions.Get(ctx, p.SessionID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get session \"%s\": %w", p.SessionID, err)
 	}
 	if _, ok := session.Participants[p.UserID]; !ok {
 		return nil, ErrNotParticipant
 	}
-	return s.renders.DownloadURL(ctx, p.SessionID)
+	url, err := s.renders.DownloadURL(ctx, p.SessionID)
+	if err != nil {
+		return nil, fmt.Errorf("generate render download url for session \"%s\": %w", p.SessionID, err)
+	}
+	return url, nil
 }
 
 type ConnectToSessionParams struct {

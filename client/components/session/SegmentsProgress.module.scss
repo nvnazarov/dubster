@@ -1,0 +1,27 @@
+@use "../../style/global.scss" as g;
+
+@mixin shared {
+  width: g.$md;
+  height: g.$md;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 50%;
+}
+
+.current {
+  @include shared;
+  background-color: g.$color-surface-primary-400;
+  border-color: g.$color-surface-primary-100;
+}
+
+.recorded {
+  @include shared;
+  background-color: greenyellow;
+  border-color: green;
+}
+
+.default {
+  @include shared;
+  background-color: g.$color-surface-400;
+  border-color: g.$color-surface-200;
+}

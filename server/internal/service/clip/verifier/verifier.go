@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"time"
@@ -156,12 +157,12 @@ func (r *Verifier) verify(ctx context.Context, clip clip.Clip) error {
 	}
 	blob, err := r.blobs.OpenRead(ctx, clip.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("open video for reading: %w", err)
 	}
 	defer blob.Close()
 	blobBytes, err := io.ReadAll(io.LimitReader(blob, int64(r.maxClipSize.B())+1))
 	if err != nil {
-		return err
+		return fmt.Errorf("read video bytes: %w", err)
 	}
 	probeInfo, err := mp4.Probe(bytes.NewReader(blobBytes))
 	if err != nil {

@@ -17,8 +17,9 @@ export default function DeleteButton() {
 
   return (
     <Button
-      text="Delete"
+      text="Delete clip"
       onClick={deleteClip}
+      danger
       progress={deleting ? 0 : undefined}
     />
   );

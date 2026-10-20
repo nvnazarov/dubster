@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nvnazarov/dubster/server/internal/misc/util/errorsutil"
 	"github.com/nvnazarov/dubster/server/internal/service/clip"
 	"github.com/nvnazarov/dubster/server/internal/service/library"
 )
@@ -45,18 +44,18 @@ type cursor struct {
 func (c *cursor) encode() (string, error) {
 	bytes, err := json.Marshal(c)
 	if err != nil {
-		return "", errorsutil.WrapError(err)
+		return "", fmt.Errorf("encode cursor: %w", err)
 	}
-	return string(bytes), nil
+	return string(bytes), err
 }
 
 func (c *cursor) decode(encoded string) error {
 	err := json.Unmarshal([]byte(encoded), c)
 	if _, ok := errors.AsType[*json.SemanticError](err); ok {
-		return library.ErrInvalidCursor
+		return library.InvalidParams(fmt.Errorf("invalid cursor: ", err))
 	}
 	if err != nil {
-		return errorsutil.WrapError(err)
+		return fmt.Errorf("decode cursor: ", err)
 	}
 	return nil
 }

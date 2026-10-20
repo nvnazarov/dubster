@@ -18,7 +18,6 @@ import Author from "@/components/clip/Author";
 import NotFound from "@/components/clip/NotFound";
 import Spinner from "@/components/shared/misc/Spinner";
 import DeleteButton from "@/components/clip/DeleteButton";
-import VerifyButton from "@/components/clip/VerifyButton";
 import { useAuthContext } from "@/components/shared/auth/context";
 import HTTPSessionsRepository from "@/lib/impl/httpSessionsRepository";
 import HTTPClipsRepostory from "@/lib/impl/httpClipsRepository";
@@ -97,7 +96,6 @@ export default function ClipPage() {
                 {userID == clip.authorID && (
                   <div className={style.authoractions}>
                     <DeleteButton />
-                    {!clip.verified && <VerifyButton />}
                   </div>
                 )}
               </div>

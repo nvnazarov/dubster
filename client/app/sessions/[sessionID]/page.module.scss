@@ -9,3 +9,25 @@
   width: 100vw;
   height: 100vh;
 }
+
+.lobby {
+  &__container {
+    display: flex;
+    flex-direction: column;
+    gap: g.$md;
+  }
+  &__actions {
+    display: flex;
+    gap: g.$md;
+  }
+}
+
+.role-picking {
+  &__container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: g.$md;
+    color: g.$color-surface-1000;
+  }
+}

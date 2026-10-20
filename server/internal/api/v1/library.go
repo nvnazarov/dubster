@@ -4,6 +4,7 @@ import (
 	jsonv1 "encoding/json"
 	"encoding/json/v2"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -15,11 +16,12 @@ import (
 type LibraryRouter struct {
 	chi.Router
 	library library.Library
+	logger  *slog.Logger
 }
 
-func NewLibraryRouter(library library.Library) LibraryRouter {
+func NewLibraryRouter(library library.Library, logger *slog.Logger) LibraryRouter {
 	chiRouter := chi.NewRouter()
-	r := LibraryRouter{chiRouter, library}
+	r := LibraryRouter{chiRouter, library, logger}
 	r.Get("/cursor", r.NewCursor)
 	r.Get("/search", r.BatchAt)
 	return r
@@ -52,6 +54,7 @@ func (lr *LibraryRouter) NewCursor(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		lr.logger.Error("failed to create new cursor", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -61,6 +64,7 @@ func (lr *LibraryRouter) NewCursor(w http.ResponseWriter, r *http.Request) {
 		Cursor: cursor,
 	}
 	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
+		lr.logger.Error("failed to json marshal and send cursor", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -78,6 +82,7 @@ func (lr *LibraryRouter) BatchAt(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		lr.logger.Error("failed to get clips batch at cursor", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -91,6 +96,7 @@ func (lr *LibraryRouter) BatchAt(w http.ResponseWriter, r *http.Request) {
 		RevertCursor:  batch.RevertCursor,
 	}
 	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
+		lr.logger.Error("failed to json marshal and send batch", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

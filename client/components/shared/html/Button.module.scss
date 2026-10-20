@@ -37,6 +37,15 @@
     }
   }
 
+  &-danger {
+    background-color: g.$color-surface-danger-100;
+    box-shadow: g.$color-surface-danger-500 0px 0px 0px 1px;
+
+    &:hover:enabled {
+      box-shadow: g.$color-surface-danger-500 0px 0px 0px 2px;
+    }
+  }
+
   img {
     filter: invert(40%);
     width: g.$font-size-sm;

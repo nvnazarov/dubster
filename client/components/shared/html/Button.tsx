@@ -8,21 +8,34 @@ export type ButtonAttributes = Omit<
 > & {
   text?: string;
   icon?: string;
-  primary?: boolean;
   progress?: number;
-};
+} & (
+    | {
+        primary?: boolean;
+        danger?: undefined;
+      }
+    | {
+        primary?: undefined;
+        danger?: boolean;
+      }
+  );
 
 export default function Button({
   text,
   icon,
   primary = false,
+  danger = false,
   progress,
   ...props
 }: ButtonAttributes) {
   let klass =
     style.button +
     " " +
-    (primary ? style["button-primary"] : style["button-default"]);
+    (primary
+      ? style["button-primary"]
+      : danger
+        ? style["button-danger"]
+        : style["button-default"]);
   if (!text) {
     klass += " " + style["button-icon"];
   }

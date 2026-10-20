@@ -3,7 +3,7 @@ package clip
 import (
 	"context"
 	"errors"
-	"log/slog"
+	"fmt"
 	"time"
 	"uuid"
 )
@@ -24,14 +24,12 @@ var (
 
 type CRUD struct {
 	clips           Repository
-	logger          *slog.Logger
 	maxClipRoles    int
 	maxClipSegments int
 }
 
 type CRUDOptions struct {
 	Clips           Repository
-	Logger          *slog.Logger
 	MaxClipRoles    int
 	MaxClipSegments int
 }
@@ -39,7 +37,6 @@ type CRUDOptions struct {
 func NewCRUD(o CRUDOptions) *CRUD {
 	return &CRUD{
 		clips:           o.Clips,
-		logger:          o.Logger,
 		maxClipRoles:    o.MaxClipRoles,
 		maxClipSegments: o.MaxClipSegments,
 	}
@@ -100,8 +97,7 @@ func (c *CRUD) Create(ctx context.Context, p CreateParams) (Clip, error) {
 	}
 	err := c.clips.Save(ctx, clip)
 	if err != nil {
-		c.logger.Error("clip: failed to create", slog.Any("error", err))
-		return clip, err
+		return clip, fmt.Errorf("save clip: %w", err)
 	}
 	return clip, nil
 }
@@ -112,33 +108,31 @@ type DeleteParams struct {
 }
 
 func (c *CRUD) Delete(ctx context.Context, p DeleteParams) (err error) {
-	defer func() {
-		if err != nil {
-			c.logger.Error("clip: failed to delete", slog.Any("error", err))
-		}
-	}()
 	tx, err := c.clips.BeginTx(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 	clip, err := tx.Get(ctx, p.ClipID)
 	if err != nil {
-		return err
+		return fmt.Errorf("get clip \"%s\": %w", p.ClipID, err)
 	}
 	if clip.AuthorID != p.UserID {
 		return ErrNotOwned
 	}
 	if err := tx.Delete(ctx, p.ClipID); err != nil {
-		return err
+		return fmt.Errorf("delete clip \"%s\": %w", p.ClipID, err)
 	}
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+	return nil
 }
 
 func (c *CRUD) Get(ctx context.Context, clipID string) (Clip, error) {
 	clip, err := c.clips.Get(ctx, clipID)
 	if err != nil {
-		c.logger.Error("clip: failed to get", slog.Any("error", err))
+		return clip, fmt.Errorf("get clip \"%s\": %w", clipID, err)
 	}
-	return clip, err
+	return clip, nil
 }

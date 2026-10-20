@@ -54,11 +54,13 @@ func (cr *ClipsRouter) GetClip(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "clip not found", http.StatusNotFound)
 			return
 		} else {
+			cr.logger.Error("failed to get clip", slog.Any("error", err))
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}
 	if err := json.MarshalWrite(w, c, jsonv1.FormatDurationAsNano(true)); err != nil {
+		cr.logger.Error("failed to json marshal and send clip", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -73,6 +75,7 @@ func (cr *ClipsRouter) DeleteClip(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "clip not found", http.StatusNotFound)
 			return
 		} else {
+			cr.logger.Error("failed to delete clip", slog.Any("error", err))
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -96,7 +99,7 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "no body", http.StatusBadRequest)
 			return
 		}
-		cr.logger.Error("create clip: parse body: fail", slog.Any("error", err))
+		cr.logger.Error("failed to parse request body", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -113,12 +116,13 @@ func (cr *ClipsRouter) CreateClip(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		cr.logger.Error("failed to create clip", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
 	if err := json.MarshalWrite(w, c, jsonv1.FormatDurationAsNano(true)); err != nil {
-		cr.logger.Error("create clip: failed to return response", slog.Any("error", err))
+		cr.logger.Error("failed to json marshal and send clip", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -140,6 +144,7 @@ func (cr *ClipsRouter) GetClipUploadURL(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "clip not owned", http.StatusUnauthorized)
 			return
 		default:
+			cr.logger.Error("failed to get clip upload url", slog.Any("error", err))
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -150,7 +155,7 @@ func (cr *ClipsRouter) GetClipUploadURL(w http.ResponseWriter, r *http.Request) 
 		URL: url.String(),
 	}
 	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
-		cr.logger.Error("get clip upload url: failed to return response", slog.Any("error", err))
+		cr.logger.Error("failed to json marshal and send upload url", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -163,6 +168,7 @@ func (cr *ClipsRouter) VerifyClip(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 		ClipID: clipID,
 	}); err != nil {
+		cr.logger.Error("failed to initiate verification process", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -178,6 +184,7 @@ func (cr *ClipsRouter) GetClipDownloadURL(w http.ResponseWriter, r *http.Request
 			http.Error(w, "clip not found", http.StatusNotFound)
 			return
 		default:
+			cr.logger.Error("failed to get clip download url", slog.Any("error", err))
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -188,7 +195,7 @@ func (cr *ClipsRouter) GetClipDownloadURL(w http.ResponseWriter, r *http.Request
 		URL: url.String(),
 	}
 	if err := json.MarshalWrite(w, out, jsonv1.FormatDurationAsNano(true)); err != nil {
-		cr.logger.Error("get clip download url: failed to return response", slog.Any("error", err))
+		cr.logger.Error("failed to json marshal and send download url", slog.Any("error", err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

@@ -1,0 +1,17 @@
+@use "../../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: g.$sm;
+}
+
+.participant {
+  display: flex;
+  gap: g.$md;
+  color: g.$color-surface-1000;
+  padding: g.$sm;
+  background-color: g.$color-surface-200;
+  border: 1px solid g.$color-surface-400;
+  border-radius: g.$radius-sm;
+}

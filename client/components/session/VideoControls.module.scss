@@ -1,0 +1,6 @@
+@use "../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  gap: g.$md;
+}

@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"maps"
 	"net/url"
 	"sync"
 
@@ -78,9 +79,18 @@ func (c *Connection) Done(ctx context.Context) error {
 	return c.session.done(c.userID)
 }
 
+type SessionState struct {
+	Clip         clip.Clip
+	Participants map[string]struct{}
+	Done         map[string]struct{}
+	Actors       map[string]string
+	Grades       map[string]float64
+	Phase        Phase
+}
+
 // Events returns the current session state and a channel of events
 // occuring since the state.
-func (c *Connection) Events(ctx context.Context) (Session, <-chan any) {
+func (c *Connection) Events(ctx context.Context) (SessionState, <-chan any) {
 	return c.session.events(ctx, c.userID)
 }
 
@@ -98,7 +108,7 @@ type session struct {
 	doneParticipants map[string]struct{}
 	connections      map[string]*Connection
 	subs             map[string]chan any
-	phase            phase
+	phase            Phase
 	renderDispatcher command.Dispatcher[string]
 	gradeDispatcher  command.Dispatcher[string]
 	renderConsumer   event.Consumer[string]
@@ -107,13 +117,13 @@ type session struct {
 	cond             *sync.Cond
 }
 
-type phase int
+type Phase int
 
 const (
-	phaseLobby phase = iota
-	phaseRolePicking
-	phaseSegmentsVoicing
-	phaseFinilizing
+	PhaseLobby Phase = iota
+	PhaseRolePicking
+	PhaseSegmentsVoicing
+	PhaseFinalizing
 )
 
 func newSession(s Session, sessions Repository, c clip.Clip) *session {
@@ -121,8 +131,9 @@ func newSession(s Session, sessions Repository, c clip.Clip) *session {
 		sessions:    sessions,
 		session:     s,
 		clip:        c,
+		subs:        map[string]chan any{},
 		connections: map[string]*Connection{},
-		phase:       phaseLobby,
+		phase:       PhaseLobby,
 		mu:          &sync.Mutex{},
 		cond:        sync.NewCond(&sync.Mutex{}),
 	}
@@ -142,7 +153,7 @@ func (s *session) emit(event any) {
 	}
 }
 
-func (s *session) events(ctx context.Context, userID string) (Session, <-chan any) {
+func (s *session) events(ctx context.Context, userID string) (SessionState, <-chan any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.subs[userID]; ok {
@@ -156,7 +167,14 @@ func (s *session) events(ctx context.Context, userID string) (Session, <-chan an
 			s.unsub(userID)
 		}
 	}()
-	return s.session, ch
+	return SessionState{
+		Clip:         s.clip,
+		Participants: s.session.Participants,
+		Done:         maps.Clone(s.doneParticipants),
+		Actors:       maps.Clone(s.session.Actors),
+		Grades:       maps.Clone(s.session.Grades),
+		Phase:        s.phase,
+	}, ch
 }
 
 func (s *session) connect(userID string) (*Connection, error) {
@@ -166,10 +184,10 @@ func (s *session) connect(userID string) (*Connection, error) {
 	if ok {
 		return c, nil
 	}
-	if s.phase != phaseLobby {
+	if s.phase != PhaseLobby {
 		return nil, ErrState
 	}
-	c = &Connection{session: s}
+	c = &Connection{session: s, userID: userID}
 	s.connections[userID] = c
 	s.emit(EventUserConnected{UserID: userID})
 	return c, nil
@@ -178,7 +196,7 @@ func (s *session) connect(userID string) (*Connection, error) {
 func (s *session) disconnect(userID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.phase == phaseLobby {
+	if s.phase == PhaseLobby {
 		delete(s.connections, userID)
 		delete(s.session.Participants, userID)
 	}
@@ -195,7 +213,7 @@ func (s *session) kick(kickerID string, subjectID string) error {
 	if subjectID == s.session.HostID {
 		return ErrHostKick
 	}
-	if s.phase == phaseFinilizing {
+	if s.phase == PhaseFinalizing {
 		return ErrState
 	}
 	if _, ok := s.session.Participants[subjectID]; !ok {
@@ -203,7 +221,7 @@ func (s *session) kick(kickerID string, subjectID string) error {
 	}
 	delete(s.doneParticipants, subjectID)
 	delete(s.session.Participants, subjectID)
-	if s.phase == phaseRolePicking {
+	if s.phase == PhaseRolePicking {
 		for roleID, actorID := range s.session.Actors {
 			if actorID == subjectID {
 				delete(s.session.Actors, roleID)
@@ -222,13 +240,13 @@ func (s *session) switchToRolePicking(userID string) error {
 	if userID != s.session.HostID {
 		return ErrNotHost
 	}
-	if s.phase != phaseLobby {
+	if s.phase != PhaseLobby {
 		return ErrState
 	}
 	if err := s.sessions.Save(context.TODO(), s.session); err != nil {
 		return err
 	}
-	s.phase = phaseRolePicking
+	s.phase = PhaseRolePicking
 	s.emit(EventRolePickingState{})
 	return nil
 }
@@ -239,7 +257,7 @@ func (s *session) switchToSegmentsVoicing(userID string) error {
 	if userID != s.session.HostID {
 		return ErrNotHost
 	}
-	if s.phase != phaseRolePicking {
+	if s.phase != PhaseRolePicking {
 		return ErrState
 	}
 	for participantID := range s.session.Participants {
@@ -257,7 +275,7 @@ func (s *session) switchToSegmentsVoicing(userID string) error {
 	if err := s.sessions.Save(context.TODO(), s.session); err != nil {
 		return err
 	}
-	s.phase = phaseSegmentsVoicing
+	s.phase = PhaseSegmentsVoicing
 	s.emit(EventSegmentsVoicingState{})
 	return nil
 }
@@ -268,7 +286,7 @@ func (s *session) takeRole(userID, roleID string) error {
 	if _, ok := s.session.Participants[userID]; !ok {
 		return ErrNotParticipant
 	}
-	if s.phase != phaseRolePicking {
+	if s.phase != PhaseRolePicking {
 		return ErrState
 	}
 	if _, ok := s.clip.Roles[roleID]; !ok {
@@ -291,7 +309,7 @@ func (s *session) releaseRole(userID, roleID string) error {
 	if _, ok := s.session.Participants[userID]; !ok {
 		return ErrNotParticipant
 	}
-	if s.phase != phaseRolePicking {
+	if s.phase != PhaseRolePicking {
 		return ErrState
 	}
 	if _, ok := s.clip.Roles[roleID]; !ok {
@@ -315,7 +333,7 @@ func (s *session) done(userID string) error {
 	if _, ok := s.session.Participants[userID]; !ok {
 		return ErrNotParticipant
 	}
-	if s.phase != phaseSegmentsVoicing {
+	if s.phase != PhaseSegmentsVoicing {
 		return ErrState
 	}
 	s.doneParticipants[userID] = struct{}{}
@@ -339,11 +357,11 @@ func (s *session) finalizeIfAllParticipantsDone() {
 	go func() {
 		s.cond.L.Lock()
 		defer s.cond.L.Unlock()
-		for s.phase != phaseSegmentsVoicing && len(s.doneParticipants) != len(s.session.Participants) {
+		for s.phase != PhaseSegmentsVoicing && len(s.doneParticipants) != len(s.session.Participants) {
 			s.cond.Wait()
 		}
 		if len(s.doneParticipants) == len(s.session.Participants) {
-			s.phase = phaseFinilizing
+			s.phase = PhaseFinalizing
 			s.emit(EventFinalizingState{})
 			// TODO: handle errors.
 			_ = s.sessions.Save(context.TODO(), s.session)

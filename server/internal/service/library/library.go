@@ -10,7 +10,6 @@ import (
 type InvalidParams error
 
 var (
-	ErrInvalidCursor         InvalidParams = errors.New("cursor is invalid")
 	ErrNegativeNumberOfRoles InvalidParams = errors.New("negative number of roles")
 )
 

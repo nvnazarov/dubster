@@ -1,0 +1,15 @@
+@use "../../../style/global.scss" as g;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 150px;
+  height: 200px;
+  background-color: g.$color-surface-200;
+  border: 1px solid g.$color-surface-400;
+  border-radius: g.$radius-sm;
+  padding: g.$sm;
+  color: g.$color-surface-1000;
+}

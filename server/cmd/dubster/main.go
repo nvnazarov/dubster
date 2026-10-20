@@ -202,18 +202,16 @@ func main() {
 	// Setup and run HTTP API.
 	err = api.ListenAndServe(api.Options{
 		Address: config.Server.Address(),
-		Library: api.NewLibraryRouter(library.New(postgresClipRepository)),
+		Library: api.NewLibraryRouter(library.New(postgresClipRepository), logger),
 		Clips: api.NewClipsRouter(api.ClipsRouterDependencies{
 			CRUD: clip.NewCRUD(clip.CRUDOptions{
 				Clips:           postgresClipRepository,
-				Logger:          logger,
 				MaxClipSegments: config.Clip.MaxSegments,
 				MaxClipRoles:    config.Clip.MaxRoles,
 			}),
 			Store: clip.NewStore(clip.StoreOptions{
-				Clips:  postgresClipRepository,
-				Store:  s3ClipsPublicBucket,
-				Logger: logger,
+				Clips: postgresClipRepository,
+				Store: s3ClipsPublicBucket,
 			}),
 			Verification: clip.NewVerification(clip.VerificationOptions{
 				Clips:      postgresClipRepository,
@@ -226,8 +224,7 @@ func main() {
 			postgresSessionRepository,
 			postgresClipRepository,
 			s3RendersPublicBucket,
-			logger,
-		)),
+		), logger),
 		CORSAllowedOrigins: config.Server.CORS.AllowedOrigins,
 		Logger:             logger,
 	})
