@@ -1,31 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import style from "@/components/producer/Video.module.scss";
-import { useSessionContext } from "@/components/session/lobby/context";
+import style from "@/components/session/segmentsVoicing/Video.module.scss";
+import { useSessionContext } from "@/components/session/context";
+import { useSegmentsVoicingContext } from "@/components/session/segmentsVoicing/context";
 import { Duration } from "@/lib/time";
 import { useObjectProperty } from "@/lib/state";
-import { Segment } from "@/lib/models/clip";
 
 export default function Video() {
-  const { video, producer, clip } = useSessionContext();
+  const { connection } = useSessionContext();
+  const ctx = useSegmentsVoicingContext();
+  const clip = useObjectProperty(connection.state, "clip");
   const videoURLRef = useRef<string | null>(null);
   const htmlVideoRef = useRef<HTMLVideoElement>(null);
-  const videoState = useObjectProperty(video, "state");
-  const selectedSegmentID = useObjectProperty(producer, "selectedSegmentID");
-  const [selectedSegment, setSelectedSegment] = useState<Segment | null>(null);
-
-  useEffect(() => {
-    if (!selectedSegmentID) {
-      setSelectedSegment(null);
-      return;
-    }
-    const segment = clip.segments.get(selectedSegmentID);
-    setSelectedSegment(segment.snapshot());
-    const sub = segment.subscribe(setSelectedSegment);
-    return () => {
-      sub.cancel();
-    };
-  }, [selectedSegmentID, clip]);
+  const videoState = useObjectProperty(ctx.video, "state");
+  const currentSegmentID = useObjectProperty(ctx, "currentSegmentID");
+  const currentSegment = clip.segments[currentSegmentID]!;
 
   useEffect(() => {
     return () => {
@@ -41,30 +30,26 @@ export default function Video() {
     if (!htmlVideo) return;
     const handleTimeUpdate = () => {
       let offset = htmlVideo.currentTime * 1000;
-      if (!selectedSegment) {
-        video.offset = new Duration(offset);
-        return;
+      if (offset > currentSegment.end.milliseconds) {
+        ctx.video.state = "stopped";
+        offset = currentSegment.end.milliseconds;
       }
-      if (offset > selectedSegment.end.milliseconds) {
-        video.state = "stopped";
-        offset = selectedSegment.end.milliseconds;
-      }
-      video.offset = new Duration(offset);
+      ctx.video.offset = new Duration(offset);
     };
     htmlVideo.addEventListener("timeupdate", handleTimeUpdate);
     return () => {
       htmlVideo.removeEventListener("timeupdate", handleTimeUpdate);
     };
-  }, [htmlVideoRef, selectedSegment, videoState]);
+  }, [ctx, htmlVideoRef, currentSegment, videoState]);
 
   useEffect(() => {
     const htmlVideo = htmlVideoRef.current;
     if (!htmlVideo) return;
     const handleVideoEnded = () => {
-      video.state = "stopped";
+      ctx.video.state = "stopped";
     };
     const handleVideoMetadataLoaded = () => {
-      video.duration = new Duration(htmlVideo.duration * 1000);
+      ctx.video.duration = new Duration(htmlVideo.duration * 1000);
     };
     htmlVideo.addEventListener("ended", handleVideoEnded);
     htmlVideo.addEventListener("loadedmetadata", handleVideoMetadataLoaded);
@@ -75,26 +60,18 @@ export default function Video() {
         handleVideoMetadataLoaded,
       );
     };
-  }, [htmlVideoRef]);
+  }, [ctx, htmlVideoRef]);
 
   useEffect(() => {
-    const fileSub = video.subscribe("file", (file) => {
-      const htmlVideo = htmlVideoRef.current;
-      if (!file || !htmlVideo) return;
-      const videoURL = URL.createObjectURL(file);
-      if (videoURLRef.current) {
-        URL.revokeObjectURL(videoURLRef.current);
-      }
-      videoURLRef.current = videoURL;
-      htmlVideo.src = videoURL;
-    });
-    return () => {
-      fileSub.cancel();
-    };
-  }, [htmlVideoRef]);
+    const htmlVideo = htmlVideoRef.current;
+    if (!htmlVideo) return;
+    const videoURL = URL.createObjectURL(ctx.video.file);
+    videoURLRef.current = videoURL;
+    htmlVideo.src = videoURL;
+  }, [ctx, htmlVideoRef]);
 
   useEffect(() => {
-    const stateSub = video.subscribe("state", (state) => {
+    const stateSub = ctx.video.subscribe("state", (state) => {
       const htmlVideo = htmlVideoRef.current;
       if (!htmlVideo) return;
       switch (state) {
@@ -113,20 +90,20 @@ export default function Video() {
     return () => {
       stateSub.cancel();
     };
-  }, [htmlVideoRef]);
+  }, [ctx, htmlVideoRef]);
 
   useEffect(() => {
-    const offsetSub = video.subscribe("offset", (offset) => {
+    const offsetSub = ctx.video.subscribe("offset", (offset) => {
       const htmlVideo = htmlVideoRef.current;
       if (!htmlVideo) return;
-      if (video.state !== "playing") {
+      if (ctx.video.state !== "playing") {
         htmlVideo.currentTime = offset.seconds;
       }
     });
     return () => {
       offsetSub.cancel();
     };
-  }, [htmlVideoRef]);
+  }, [ctx, htmlVideoRef]);
 
   return <video ref={htmlVideoRef} className={style.container} />;
 }

@@ -31,3 +31,16 @@
     color: g.$color-surface-1000;
   }
 }
+
+.segments-voicing {
+  &__container {
+    display: flex;
+    flex-direction: column;
+    gap: g.$md;
+    align-items: center;
+  }
+  &__actions {
+    display: flex;
+    gap: g.$md;
+  }
+}

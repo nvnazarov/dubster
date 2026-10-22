@@ -5,51 +5,54 @@ import playIcon from "@/public/icons/play.png";
 import pauseIcon from "@/public/icons/pause.png";
 import stopIcon from "@/public/icons/stop.png";
 import Button from "@/components/shared/html/Button";
-import { useProducerContext } from "@/components/producer/context";
 import { useObjectProperty } from "@/lib/state";
 import { Duration } from "@/lib/time";
 import { Segment } from "@/lib/models/clip";
+import { useSegmentsVoicingContext } from "./context";
+import { useSessionContext } from "../context";
 
 export default function VideoControls() {
-  const { video, producer, clip } = useProducerContext();
-  const file = useObjectProperty(video, "file");
-  const videoState = useObjectProperty(video, "state");
-  const selectedSegmentID = useObjectProperty(producer, "selectedSegmentID");
+  const { connection } = useSessionContext();
+  const clip = useObjectProperty(connection.state, "clip");
+  const ctx = useSegmentsVoicingContext();
+  const videoState = useObjectProperty(ctx.video, "state");
+  const currentSegmentID = useObjectProperty(ctx, "currentSegmentID");
 
-  const stop = useCallback((segment: Segment | null) => {
-    video.state = "stopped";
-    video.offset = segment ? segment.begin : new Duration(0);
-  }, []);
+  const stop = useCallback(
+    (segment: Segment | null) => {
+      ctx.video.state = "stopped";
+      ctx.video.offset = segment ? segment.begin : new Duration(0);
+    },
+    [ctx],
+  );
 
   const pause = useCallback(() => {
-    video.state = "paused";
+    ctx.video.state = "paused";
   }, []);
 
   const play = useCallback((segment: Segment | null) => {
-    if (video.state === "stopped") {
+    if (ctx.video.state === "stopped") {
       const offset = segment ? segment.begin : new Duration(0);
-      video.offset = offset;
+      ctx.video.offset = offset;
     }
-    video.state = "playing";
+    ctx.video.state = "playing";
   }, []);
 
-  const selectedSegment = selectedSegmentID
-    ? clip.segments.get(selectedSegmentID)
+  const currentSegment = currentSegmentID
+    ? clip.segments[currentSegmentID]!
     : null;
   const isPlaying = videoState === "playing";
   const isStopped = videoState === "stopped";
-  const isVideoOpen = file !== null;
   return (
     <div className={style.container}>
       <Button
         icon={isPlaying ? pauseIcon.src : playIcon.src}
-        onClick={isPlaying ? pause : () => play(selectedSegment)}
-        disabled={!isVideoOpen}
+        onClick={isPlaying ? pause : () => play(currentSegment)}
       />
       <Button
         icon={stopIcon.src}
-        onClick={() => stop(selectedSegment)}
-        disabled={!isVideoOpen || isStopped}
+        onClick={() => stop(currentSegment)}
+        disabled={isStopped}
       />
     </div>
   );
