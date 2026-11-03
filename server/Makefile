@@ -1,3 +1,5 @@
+.PHONY: build test format-check
+
 build:
 	go build -v ./cmd/dubster
 
