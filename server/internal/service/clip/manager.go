@@ -25,13 +25,13 @@ var (
 type Option func(m *Manager)
 
 type Manager struct {
-	clips          clip.Repository
+	clips          Repository
 	videos         blob.RemoteFolder
 	uploadExpiry   time.Duration
 	downloadExpiry time.Duration
 }
 
-func NewManager(clips clip.Repository, videos blob.RemoteFolder, options ...Option) *Manager {
+func NewManager(clips Repository, videos blob.RemoteFolder, options ...Option) *Manager {
 	m := &Manager{
 		clips:          clips,
 		videos:         videos,
