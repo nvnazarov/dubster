@@ -7,7 +7,7 @@ import (
 
 	"github.com/nvnazarov/dubster/server/internal/domain/model/verification"
 	"github.com/nvnazarov/dubster/server/internal/domain/service/clip"
-	"github.com/nvnazarov/dubster/server/internal/misc/blob/v2"
+	"github.com/nvnazarov/dubster/server/internal/misc/blob"
 )
 
 var ErrClipNotFound = errors.New("clip not found")
